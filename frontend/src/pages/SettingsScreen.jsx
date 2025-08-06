@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, Monitor, User, LogOut, Shield } from 'lucide-react';
+import { Sun, Moon, Monitor, User, LogOut, Shield, KeyRound } from 'lucide-react'; // Importar KeyRound
 import GlassCard from '../components/GlassCard';
 import useAppStore from '../store/useAppStore';
 
@@ -39,9 +39,23 @@ const SettingsScreen = ({ theme, setTheme, setView, onLogoutClick }) => {
                         className="flex items-center justify-center gap-3 w-full mt-4 py-4 rounded-md font-semibold transition-colors duration-200 bg-bg-secondary border border-glass-border hover:bg-white/10"
                     >
                         <User size={20} />
-                        <span>Editar mi Perfil</span>
+                        <span>Editar mi Perfil Físico</span>
                     </button>
                 </GlassCard>
+                
+                {/* --- SECCIÓN NUEVA --- */}
+                <GlassCard className="p-6">
+                    <h2 className="text-xl font-bold">Cuenta</h2>
+                    <p className="text-text-secondary mb-4">Gestiona tu nombre, email y contraseña.</p>
+                    <button
+                        onClick={() => setView('accountEditor')}
+                        className="flex items-center justify-center gap-3 w-full mt-4 py-4 rounded-md font-semibold transition-colors duration-200 bg-bg-secondary border border-glass-border hover:bg-white/10"
+                    >
+                        <KeyRound size={20} />
+                        <span>Configurar Cuenta</span>
+                    </button>
+                </GlassCard>
+                {/* --- FIN DE LA SECCIÓN --- */}
 
                 <GlassCard className="p-6">
                     <h2 className="text-xl font-bold">Apariencia</h2>
@@ -85,7 +99,7 @@ const SettingsScreen = ({ theme, setTheme, setView, onLogoutClick }) => {
                         <span>Cerrar Sesión</span>
                     </button>
                     <p className="text-center text-xs text-text-muted mt-4">
-                        FitTrack Pro v1.3.1
+                        FitTrack Pro v1.4.0
                     </p>
                 </GlassCard>
             </div>

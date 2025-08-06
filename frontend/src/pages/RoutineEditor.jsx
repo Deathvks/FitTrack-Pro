@@ -3,6 +3,7 @@ import { ChevronLeft, Trash2, Save } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import ExerciseSearchInput from '../components/ExerciseSearchInput';
 import Spinner from '../components/Spinner';
+import { useToast } from '../hooks/useToast';
 
 const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
     const [editedRoutine, setEditedRoutine] = useState(() => {
@@ -22,6 +23,9 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
         }
         return initialRoutine;
     });
+
+    const [errors, setErrors] = useState({});
+    const { addToast } = useToast();
 
     const descriptionRef = useRef(null);
     const CHAR_LIMIT = 250;
@@ -74,30 +78,67 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
         }));
     };
 
+    // --- INICIO DE LA MODIFICACIÓN: Lógica de validación mejorada ---
+    const validateRoutine = () => {
+        const newErrors = { exercises: [] };
+        let isValid = true;
+
+        // 1. Validar el nombre de la rutina
+        if (!editedRoutine.name.trim()) {
+            newErrors.name = 'El nombre de la rutina es obligatorio.';
+            isValid = false;
+        }
+
+        // 2. Filtrar los ejercicios que realmente tienen contenido
+        const nonEmptyExercises = editedRoutine.exercises.filter(ex => ex.name && ex.name.trim() !== '');
+
+        // 3. Comprobar si hay al menos un ejercicio
+        if (nonEmptyExercises.length === 0) {
+            addToast('La rutina debe tener al menos un ejercicio.', 'error');
+            isValid = false;
+        }
+
+        // 4. Validar cada ejercicio individualmente
+        editedRoutine.exercises.forEach((ex, index) => {
+            const exerciseErrors = {};
+            if (ex.name && ex.name.trim()) { // Solo valida si el ejercicio tiene nombre
+                if (!ex.sets || parseInt(ex.sets, 10) <= 0) {
+                    exerciseErrors.sets = 'Debe ser > 0';
+                    isValid = false;
+                }
+                if (!ex.reps || !ex.reps.trim()) {
+                    exerciseErrors.reps = 'Requerido';
+                    isValid = false;
+                }
+            }
+            newErrors.exercises[index] = exerciseErrors;
+        });
+        
+        setErrors(newErrors);
+        return isValid;
+    };
+
     const handleSave = () => {
-        if (!editedRoutine.name || editedRoutine.name.trim() === '') {
-            alert('Por favor, dale un nombre a la rutina.');
+        if (!validateRoutine()) {
+            // Muestra un toast genérico solo si el error no fue la falta de ejercicios
+            if (editedRoutine.exercises.filter(ex => ex.name.trim() !== '').length > 0) {
+                 addToast('Por favor, corrige los errores antes de guardar.', 'error');
+            }
             return;
         }
-        const exercisesToSave = editedRoutine.exercises.filter(ex => ex.name && ex.name.trim() !== '');
-        for (const ex of exercisesToSave) {
-            if (!ex.sets || ex.sets <= 0) {
-                alert(`Por favor, introduce un número de series válido para "${ex.name}".`); return;
-            }
-            if (!ex.reps || ex.reps.trim() === '') {
-                alert(`Por favor, introduce las repeticiones para "${ex.name}".`); return;
-            }
-        }
-        const routineToSave = {
-            ...editedRoutine,
-            exercises: exercisesToSave.map(ex => {
+
+        const exercisesToSave = editedRoutine.exercises
+            .filter(ex => ex.name && ex.name.trim() !== '')
+            .map(ex => {
                 const copy = { ...ex };
                 delete copy.tempId;
                 return copy;
-            })
-        };
+            });
+
+        const routineToSave = { ...editedRoutine, exercises: exercisesToSave };
         onSave(routineToSave);
     };
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const baseInputClasses = "w-full bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition";
 
@@ -119,6 +160,7 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
                             onChange={(e) => setEditedRoutine({ ...editedRoutine, name: e.target.value })}
                             className={baseInputClasses}
                         />
+                        {errors.name && <p className="form-error-text mt-1">{errors.name}</p>}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-text-secondary mb-2">Descripción (Opcional)</label>
@@ -136,12 +178,10 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
                 <div className="space-y-4">
                     <h2 className="text-xl font-bold">Ejercicios</h2>
                     {editedRoutine.exercises.map((ex, index) => (
-                        // --- INICIO DE LA CORRECCIÓN ---
                         <GlassCard
                             key={ex.tempId}
                             className="p-4 bg-bg-secondary/50 relative focus-within:z-20"
                         >
-                            {/* --- FIN DE LA CORRECCIÓN --- */}
                             <div className="flex items-center gap-4 mb-4">
                                 <ExerciseSearchInput
                                     value={ex.name}
@@ -153,20 +193,26 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                <input
-                                    type="number"
-                                    placeholder="Series"
-                                    value={ex.sets || ''}
-                                    onChange={(e) => handleFieldChange(index, 'sets', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
-                                    className={baseInputClasses}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Reps (ej: 8-12)"
-                                    value={ex.reps || ''}
-                                    onChange={(e) => handleFieldChange(index, 'reps', e.target.value)}
-                                    className={baseInputClasses}
-                                />
+                                <div>
+                                    <input
+                                        type="number"
+                                        placeholder="Series"
+                                        value={ex.sets || ''}
+                                        onChange={(e) => handleFieldChange(index, 'sets', e.target.value === '' ? '' : parseInt(e.target.value, 10))}
+                                        className={baseInputClasses}
+                                    />
+                                    {errors.exercises?.[index]?.sets && <p className="form-error-text mt-1">{errors.exercises[index].sets}</p>}
+                                </div>
+                                <div>
+                                    <input
+                                        type="text"
+                                        placeholder="Reps (ej: 8-12)"
+                                        value={ex.reps || ''}
+                                        onChange={(e) => handleFieldChange(index, 'reps', e.target.value)}
+                                        className={baseInputClasses}
+                                    />
+                                    {errors.exercises?.[index]?.reps && <p className="form-error-text mt-1">{errors.exercises[index].reps}</p>}
+                                </div>
                                 <input
                                     type="text"
                                     placeholder="Grupo Muscular"

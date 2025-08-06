@@ -1,29 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { X, ArrowLeft } from 'lucide-react';
+import { X, ArrowLeft, Plus, Minus } from 'lucide-react';
 import GlassCard from './GlassCard';
 import useAppStore from '../store/useAppStore';
 
 const RestTimerModal = () => {
   const {
-    isResting,
     restTimerEndTime,
     restTimerInitialDuration,
     startRestTimer,
     stopRestTimer,
+    addRestTime,
+    resetRestTimer, // <-- 1. Importar la nueva acción
   } = useAppStore(state => ({
-    isResting: state.isResting,
     restTimerEndTime: state.restTimerEndTime,
     restTimerInitialDuration: state.restTimerInitialDuration,
     startRestTimer: state.startRestTimer,
     stopRestTimer: state.stopRestTimer,
+    addRestTime: state.addRestTime,
+    resetRestTimer: state.resetRestTimer, // <-- 1. Importar la nueva acción
   }));
 
   const [timeLeft, setTimeLeft] = useState(0);
   const [view, setView] = useState(restTimerEndTime ? 'timer' : 'select');
-  const [customDuration, setCustomDuration] = useState(60);
+  const [customDuration, setCustomDuration] = useState('');
 
   useEffect(() => {
-    if (!isResting || !restTimerEndTime) {
+    if (!restTimerEndTime) {
       setTimeLeft(0);
       return;
     }
@@ -32,32 +34,58 @@ const RestTimerModal = () => {
       const remaining = Math.round((restTimerEndTime - Date.now()) / 1000);
       const newTimeLeft = Math.max(0, remaining);
       setTimeLeft(newTimeLeft);
-
-      if (newTimeLeft === 0) {
-        stopRestTimer();
-      }
     };
 
     updateTimer();
     const intervalId = setInterval(updateTimer, 500);
     return () => clearInterval(intervalId);
-  }, [isResting, restTimerEndTime, stopRestTimer]);
+  }, [restTimerEndTime]);
 
-  const handleStart = (duration) => {
-    if(duration > 0) {
-      startRestTimer(duration);
-      // --- INICIO DE LA CORRECCIÓN ---
-      // Sincronizamos el estado local 'timeLeft' inmediatamente para evitar el parpadeo.
-      setTimeLeft(duration);
-      // --- FIN DE LA CORRECCIÓN ---
+  const parseTimeToSeconds = (timeString) => {
+    if (!timeString || typeof timeString !== 'string') return 0;
+  
+    if (timeString.includes(':')) {
+      const parts = timeString.split(':');
+      const minutes = parseInt(parts[0] || '0', 10);
+      const seconds = parseInt(parts[1] || '0', 10);
+      return (minutes * 60) + seconds;
+    }
+  
+    const parsedSeconds = parseInt(timeString, 10);
+    return isNaN(parsedSeconds) ? 0 : parsedSeconds;
+  };
+  
+  const handleStartCustom = () => {
+    const durationInSeconds = parseTimeToSeconds(customDuration);
+    if (durationInSeconds > 0) {
+      startRestTimer(durationInSeconds);
+      setTimeLeft(durationInSeconds);
       setView('timer');
     }
   };
 
+  const handleCustomDurationChange = (e) => {
+    const value = e.target.value;
+    if (/^[0-9:]*$/.test(value) && (value.match(/:/g) || []).length <= 1) {
+      setCustomDuration(value);
+    }
+  };
+
+  const handleStartPreset = (duration) => {
+    if (duration > 0) {
+      startRestTimer(duration);
+      setTimeLeft(duration);
+      setView('timer');
+    }
+  };
+  
+  // --- INICIO DE LA MODIFICACIÓN ---
   const goBackToSelect = () => {
-    stopRestTimer();
+    // 2. Usar la nueva acción que resetea el tiempo sin cerrar el modal
+    resetRestTimer();
     setView('select');
   };
+  // --- FIN DE LA MODIFICACIÓN ---
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -65,9 +93,9 @@ const RestTimerModal = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const progress = restTimerInitialDuration > 0
+  const progress = restTimerInitialDuration > 0 && timeLeft > 0
     ? ((restTimerInitialDuration - timeLeft) / restTimerInitialDuration) * 100
-    : 0;
+    : timeLeft === 0 ? 100 : 0;
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]">
@@ -99,7 +127,8 @@ const RestTimerModal = () => {
                 />
               </svg>
               <div className="absolute font-mono text-5xl font-bold text-text-secondary">
-                0:00
+                {/* 3. Se asegura de que al volver, se muestre 0:00 */}
+                {restTimerEndTime ? formatTime(timeLeft) : '0:00'}
               </div>
             </div>
 
@@ -107,7 +136,7 @@ const RestTimerModal = () => {
               {[60, 120, 180].map(time => (
                 <button 
                   key={time} 
-                  onClick={() => handleStart(time)}
+                  onClick={() => handleStartPreset(time)}
                   className="p-4 bg-bg-secondary rounded-md border border-glass-border hover:border-accent transition"
                 >
                   <span className="font-bold text-xl">{time / 60}</span>
@@ -117,14 +146,14 @@ const RestTimerModal = () => {
             </div>
             <div className="flex items-center gap-2">
               <input 
-                type="number" 
-                placeholder="Segundos"
+                type="text" 
+                placeholder="M:SS"
                 value={customDuration}
-                onChange={(e) => setCustomDuration(parseInt(e.target.value, 10) || 0)}
+                onChange={handleCustomDurationChange}
                 className="w-full text-center bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition"
               />
               <button 
-                onClick={() => handleStart(customDuration)}
+                onClick={handleStartCustom}
                 className="px-6 py-3 rounded-md bg-accent text-bg-secondary font-semibold whitespace-nowrap"
               >
                 Iniciar
@@ -141,7 +170,7 @@ const RestTimerModal = () => {
               <svg className="w-full h-full" viewBox="0 0 100 100">
                 <circle className="text-glass-border" strokeWidth="8" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
                 <circle
-                  className="text-accent"
+                  className={timeLeft > 0 ? "text-accent" : "text-red"}
                   strokeWidth="8"
                   strokeDasharray="283"
                   strokeDashoffset={283 - (283 * progress) / 100}
@@ -151,12 +180,22 @@ const RestTimerModal = () => {
                   r="45"
                   cx="50"
                   cy="50"
-                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', transition: 'stroke-dashoffset 0.5s linear, stroke 0.5s linear' }}
                 />
               </svg>
-              <div className="absolute font-mono text-5xl font-bold">
+              <div className={`absolute font-mono text-5xl font-bold ${timeLeft === 0 ? 'animate-pulse text-red' : ''}`}>
                 {formatTime(timeLeft)}
               </div>
+            </div>
+            <div className="flex justify-center items-center gap-4 mt-6">
+                <button onClick={() => addRestTime(-10)} className="px-5 py-3 flex items-center justify-center gap-2 rounded-full bg-bg-secondary border border-glass-border hover:border-accent transition">
+                    <Minus size={18} />
+                    <span className="font-semibold text-sm">-10 seg</span>
+                </button>
+                <button onClick={() => addRestTime(10)} className="px-5 py-3 flex items-center justify-center gap-2 rounded-full bg-bg-secondary border border-glass-border hover:border-accent transition">
+                    <Plus size={18} />
+                    <span className="font-semibold text-sm">+10 seg</span>
+                </button>
             </div>
           </div>
         )}

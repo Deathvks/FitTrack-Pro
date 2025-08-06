@@ -12,6 +12,7 @@ import LoginScreen from './pages/LoginScreen';
 import RegisterScreen from './pages/RegisterScreen';
 import OnboardingScreen from './pages/OnboardingScreen';
 import ProfileEditor from './pages/ProfileEditor';
+import AccountEditor from './pages/AccountEditor'; // <-- MODIFICACIÓN: Importar nuevo componente
 import PRToast from './components/PRToast';
 import ConfirmationModal from './components/ConfirmationModal';
 import AdminPanel from './pages/AdminPanel.jsx';
@@ -38,10 +39,7 @@ export default function App() {
     localStorage.setItem('lastView', view);
   }, [view]);
 
-  // --- INICIO DE LA MODIFICACIÓN ---
   const [isLoginView, setIsLoginView] = useState(true);
-  // --- FIN DE LA MODIFICACIÓN ---
-  
   const [theme, setThemeState] = useState(() => localStorage.getItem('theme') || 'system');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { workoutStartTime, isWorkoutPaused, workoutAccumulatedTime } = useAppStore();
@@ -122,6 +120,8 @@ export default function App() {
       case 'workout': return <Workout timer={timer} setView={navigate} />;
       case 'settings': return <SettingsScreen theme={theme} setTheme={setTheme} setView={navigate} onLogoutClick={handleLogoutClick} />;
       case 'profileEditor': return <ProfileEditor onCancel={() => navigate('settings')} />;
+      // --- MODIFICACIÓN: Añadir la nueva vista de edición de cuenta ---
+      case 'accountEditor': return <AccountEditor onCancel={() => navigate('settings')} />;
       case 'adminPanel': return <AdminPanel onCancel={() => navigate('settings')} />;
       default: return <Dashboard setView={navigate} />;
     }
@@ -198,7 +198,7 @@ export default function App() {
       )}
 
       <div className="hidden md:block absolute bottom-4 right-4 z-50 bg-bg-secondary/50 text-text-muted text-xs px-2.5 py-1 rounded-full backdrop-blur-sm select-none">
-        v1.3.1
+        v1.4.0
       </div>
     </div>
   );

@@ -3,15 +3,8 @@ import { Dumbbell, Target, Clock, Flame, Plus, Play, ArrowUp, ArrowDown, Minus, 
 import GlassCard from '../components/GlassCard';
 import StatCard from '../components/StatCard';
 import BodyWeightModal from '../components/BodyWeightModal';
-import { calculateCalories } from '../utils/helpers';
+import { calculateCalories, isSameDay } from '../utils/helpers';
 import useAppStore from '../store/useAppStore';
-
-const isSameDay = (dateFromServer, localDate) => {
-    const serverDate = new Date(dateFromServer);
-    return serverDate.getFullYear() === localDate.getFullYear() &&
-        serverDate.getMonth() === localDate.getMonth() &&
-        serverDate.getDate() === localDate.getDate();
-};
 
 const Dashboard = ({ setView }) => {
     // --- INICIO DE LA MODIFICACIÓN ---

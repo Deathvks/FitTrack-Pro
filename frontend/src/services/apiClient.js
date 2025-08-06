@@ -21,31 +21,32 @@ const apiClient = async (endpoint, options = {}) => {
         config.body = JSON.stringify(body);
     }
 
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-        const data = await response.json();
-        
-        if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                useAppStore.getState().handleLogout();
-            }
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Construye un mensaje de error claro a partir de la respuesta de la API
-            let errorMessage = data.error || 'Ha ocurrido un error inesperado.';
-            if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-                errorMessage = data.errors[0].msg; // Extrae el mensaje de express-validator
-            }
-            throw new Error(errorMessage);
-            // --- FIN DE LA MODIFICACIÓN ---
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+    if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+            useAppStore.getState().handleLogout();
         }
-        return data;
-    } catch (err) {
-        if (err instanceof SyntaxError) {
-            const textResponse = await fetch(`${API_BASE_URL}${endpoint}`, config).then(res => res.text());
-            return Promise.reject(textResponse || 'Error de red');
+
+        let errorMessage = 'Ha ocurrido un error inesperado.';
+        try {
+            const errorData = await response.json();
+            if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+                errorMessage = errorData.errors[0].msg;
+            } else if (errorData.error) {
+                errorMessage = errorData.error;
+            }
+        } catch {
+            errorMessage = response.statusText;
         }
-        return Promise.reject(err.message);
+        throw new Error(errorMessage);
     }
+
+    if (response.status === 204) {
+        return;
+    }
+
+    return response.json();
 };
 
 export default apiClient;

@@ -1,4 +1,3 @@
-// ... (imports y otras funciones sin cambios)
 import { create } from 'zustand';
 import * as authService from '../services/authService';
 import * as userService from '../services/userService';
@@ -78,7 +77,6 @@ const useAppStore = create((set, get) => ({
 
   // --- ACCIONES ---
   
-  // ... (otras acciones sin cambios)
   showPRNotification: (newPRs) => {
     set({ prNotification: newPRs });
     setTimeout(() => set({ prNotification: null }), 7000);
@@ -226,7 +224,6 @@ const useAppStore = create((set, get) => ({
     set({ isResting: true });
   },
   
-  // --- INICIO DE LA MODIFICACIÓN ---
   startRestTimer: (durationInSeconds) => {
     const endTime = Date.now() + durationInSeconds * 1000;
     const newState = {
@@ -238,6 +235,42 @@ const useAppStore = create((set, get) => ({
     setRestTimerInStorage(newState);
   },
 
+  addRestTime: (secondsToAdd) => {
+    set((state) => {
+      if (!state.restTimerEndTime) return {};
+
+      const newEndTime = state.restTimerEndTime + secondsToAdd * 1000;
+      const newInitialDuration = state.restTimerInitialDuration + secondsToAdd;
+
+      if (newEndTime < Date.now() || newInitialDuration <= 0) {
+        const finalState = { restTimerEndTime: Date.now() };
+        setRestTimerInStorage({ ...state, ...finalState});
+        return finalState;
+      }
+      
+      const newState = {
+        restTimerEndTime: newEndTime,
+        restTimerInitialDuration: newInitialDuration,
+      };
+      setRestTimerInStorage({ ...state, ...newState });
+      return newState;
+    });
+  },
+  
+  // --- INICIO DE LA MODIFICACIÓN ---
+  // Esta nueva acción resetea el tiempo pero mantiene el modal abierto
+  resetRestTimer: () => {
+    // Limpiamos los datos del timer del localStorage
+    localStorage.removeItem('restTimerEndTime');
+    localStorage.removeItem('restTimerInitialDuration');
+    // Actualizamos el estado, manteniendo isResting en true
+    set({
+      restTimerEndTime: null,
+      restTimerInitialDuration: null,
+    });
+  },
+  // --- FIN DE LA MODIFICACIÓN ---
+
   stopRestTimer: () => {
     clearRestTimerInStorage();
     set({
@@ -246,7 +279,6 @@ const useAppStore = create((set, get) => ({
         restTimerInitialDuration: null,
     });
   },
-  // --- FIN DE LA MODIFICACIÓN ---
 
   logWorkout: async (workoutData) => {
     try {
