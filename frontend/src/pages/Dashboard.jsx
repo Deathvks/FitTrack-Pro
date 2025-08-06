@@ -14,13 +14,15 @@ const isSameDay = (dateFromServer, localDate) => {
 };
 
 const Dashboard = ({ setView }) => {
+    // --- INICIO DE LA MODIFICACIÓN ---
     const {
         routines,
         workoutLog,
         bodyWeightLog,
         userProfile,
         logBodyWeight,
-        updateTodayBodyWeight
+        updateTodayBodyWeight,
+        startWorkout // 1. Obtenemos la acción para iniciar el entreno
     } = useAppStore(state => ({
         routines: state.routines,
         workoutLog: state.workoutLog,
@@ -28,7 +30,9 @@ const Dashboard = ({ setView }) => {
         userProfile: state.userProfile,
         logBodyWeight: state.logBodyWeight,
         updateTodayBodyWeight: state.updateTodayBodyWeight,
+        startWorkout: state.startWorkout,
     }));
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const [showWeightModal, setShowWeightModal] = useState(false);
 
@@ -85,6 +89,14 @@ const Dashboard = ({ setView }) => {
         return Math.round(target);
     }, [userProfile, latestWeight]);
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // 2. Creamos una función que primero inicia el entreno y LUEGO cambia la vista
+    const handleStartWorkout = (routine) => {
+        startWorkout(routine);
+        setView('workout');
+    };
+    // --- FIN DE LA MODIFICACIÓN ---
+
 
     return (
         <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 animate-[fade-in_0.5s_ease-out]">
@@ -103,10 +115,13 @@ const Dashboard = ({ setView }) => {
                     <div className="flex flex-col gap-3">
                         {routines.length > 0 ? (
                             routines.slice(0, 3).map(routine => (
-                                <button key={routine.id} onClick={() => setView('workout', { routine })} className="flex justify-between items-center w-full p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
+                                // --- INICIO DE LA MODIFICACIÓN ---
+                                // 3. El botón ahora llama a nuestra nueva función
+                                <button key={routine.id} onClick={() => handleStartWorkout(routine)} className="flex justify-between items-center w-full p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
                                     <span className="font-semibold">{routine.name}</span>
                                     <Play size={20} />
                                 </button>
+                                // --- FIN DE LA MODIFICACIÓN ---
                             ))
                         ) : (
                             <p className="text-text-muted text-center py-4">No tienes rutinas. ¡Crea una para empezar!</p>
