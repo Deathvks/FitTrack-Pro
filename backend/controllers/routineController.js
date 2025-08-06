@@ -1,7 +1,8 @@
 import { validationResult } from 'express-validator';
 import models from '../models/index.js';
+import { Op } from 'sequelize';
 
-const { Routine, RoutineExercise, sequelize } = models;
+const { Routine, RoutineExercise, WorkoutLog, WorkoutLogDetail, PersonalRecord, sequelize } = models;
 
 // OBTENER TODAS LAS RUTINAS
 export const getAllRoutines = async (req, res, next) => {
@@ -92,7 +93,8 @@ export const createRoutine = async (req, res, next) => {
   }
 };
 
-// ACTUALIZAR UNA RUTINA
+// --- INICIO DE LA MODIFICACIÓN ---
+// ACTUALIZAR UNA RUTINA (CON LÓGICA DE ACTUALIZACIÓN EN CASCADA)
 export const updateRoutine = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -104,13 +106,26 @@ export const updateRoutine = async (req, res, next) => {
   const t = await sequelize.transaction();
   try {
     const routine = await Routine.findOne({
-      where: { id, user_id: req.user.userId }
+      where: { id, user_id: req.user.userId },
+      include: [{ model: RoutineExercise, as: 'RoutineExercises' }],
+      transaction: t,
     });
 
     if (!routine) {
       await t.rollback();
       return res.status(404).json({ error: 'Rutina no encontrada' });
     }
+    
+    const oldExercises = routine.RoutineExercises;
+    const renamedExercises = [];
+
+    // Busca ejercicios que han sido renombrados
+    exercises.forEach(newEx => {
+      const oldEx = oldExercises.find(old => old.id === newEx.id);
+      if (oldEx && oldEx.name !== newEx.name) {
+        renamedExercises.push({ oldName: oldEx.name, newName: newEx.name });
+      }
+    });
 
     await routine.update({ name, description }, { transaction: t });
     await RoutineExercise.destroy({ where: { routine_id: id }, transaction: t });
@@ -127,6 +142,45 @@ export const updateRoutine = async (req, res, next) => {
       await RoutineExercise.bulkCreate(exercisesToCreate, { transaction: t });
     }
 
+    // Realiza la actualización en cascada si hay ejercicios renombrados
+    if (renamedExercises.length > 0) {
+      for (const rename of renamedExercises) {
+        // 1. Actualiza los detalles de logs de entrenamientos pasados de ESTA rutina
+        const workoutLogsForRoutine = await WorkoutLog.findAll({
+          where: { routine_id: id, user_id: req.user.userId },
+          attributes: ['id'],
+          raw: true,
+          transaction: t
+        });
+        const workoutLogIds = workoutLogsForRoutine.map(log => log.id);
+
+        if (workoutLogIds.length > 0) {
+          await WorkoutLogDetail.update(
+            { exercise_name: rename.newName },
+            {
+              where: {
+                workout_log_id: { [Op.in]: workoutLogIds },
+                exercise_name: rename.oldName
+              },
+              transaction: t
+            }
+          );
+        }
+
+        // 2. Actualiza los récords personales del usuario
+        await PersonalRecord.update(
+          { exercise_name: rename.newName },
+          {
+            where: {
+              user_id: req.user.userId,
+              exercise_name: rename.oldName
+            },
+            transaction: t
+          }
+        );
+      }
+    }
+
     await t.commit();
     const result = await Routine.findByPk(id, {
       include: [{ model: RoutineExercise, as: 'RoutineExercises' }],
@@ -135,9 +189,10 @@ export const updateRoutine = async (req, res, next) => {
     res.json(result);
   } catch (error) {
     await t.rollback();
-    next(error); // Pasar el error al middleware central
+    next(error);
   }
 };
+// --- FIN DE LA MODIFICACIÓN ---
 
 // ELIMINAR UNA RUTINA
 export const deleteRoutine = async (req, res, next) => {

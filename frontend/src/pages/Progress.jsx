@@ -38,8 +38,16 @@ const DailyDetailView = ({ logs, onClose }) => {
             setLogToDelete(null);
         }
     };
+    
+    // --- INICIO DE LA CORRECCIÓN ---
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setLogToDelete(null); // Restablece el estado para que el log vuelva a ser visible
+    };
+    // --- FIN DE LA CORRECCIÓN ---
 
     const latestWeight = userProfile?.weight || 75;
+    // La lógica de filtrado ahora funciona correctamente al cancelar
     const visibleLogs = logs.filter(log => !logToDelete || log.id !== logToDelete.id);
     const totalDuration = visibleLogs.reduce((acc, log) => acc + log.duration_seconds, 0);
     const totalCalories = visibleLogs.reduce((acc, log) => acc + calculateCalories(log.duration_seconds, latestWeight), 0);
@@ -63,7 +71,6 @@ const DailyDetailView = ({ logs, onClose }) => {
                     </div>
                     <div className="flex flex-col gap-4 border-t border-glass-border pt-4 max-h-[45vh] overflow-y-auto">
                         <h4 className="font-semibold">Entrenamientos Registrados</h4>
-                        {/* --- INICIO DE LA CORRECCIÓN --- */}
                         {visibleLogs.map((log) => (
                             <div key={log.id} className="bg-bg-secondary rounded-md">
                                 <div className="flex justify-between items-center p-3">
@@ -102,7 +109,6 @@ const DailyDetailView = ({ logs, onClose }) => {
                                 </div>
                             </div>
                         ))}
-                        {/* --- FIN DE LA CORRECCIÓN --- */}
                     </div>
                 </GlassCard>
             </div>
@@ -110,12 +116,13 @@ const DailyDetailView = ({ logs, onClose }) => {
                 <ConfirmationModal
                     message="¿Estás seguro de que quieres borrar este entrenamiento? Esta acción no se puede deshacer."
                     onConfirm={confirmDelete}
-                    onCancel={() => setShowDeleteConfirm(false)}
+                    onCancel={cancelDelete}
                 />
             )}
         </>
     );
 };
+// ... (El resto del fichero Progress.jsx no necesita cambios)
 
 const CalendarView = ({ setDetailedLog }) => {
     const { workoutLog } = useAppStore(state => ({ workoutLog: state.workoutLog }));
