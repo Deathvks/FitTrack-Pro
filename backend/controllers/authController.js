@@ -16,9 +16,13 @@ export const loginUser = async (req, res, next) => {
 
   try {
     const user = await User.findOne({ where: { email } });
+
+    // --- INICIO DE LA MODIFICACIÓN ---
+    // Si el usuario no se encuentra, enviamos un error 404 específico.
     if (!user) {
-      return res.status(401).json({ error: 'Credenciales inválidas.' });
+      return res.status(404).json({ error: 'La cuenta no existe.' });
     }
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
@@ -54,18 +58,12 @@ export const registerUser = async (req, res, next) => {
       return res.status(409).json({ error: 'El email ya está en uso.' });
     }
     
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Se elimina la lógica que asignaba el rol de admin al primer usuario.
-    // La base de datos asignará 'user' por defecto.
-    // --- FIN DE LA CORRECCIÓN ---
-
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
     const newUser = await User.create({
       name,
       email,
       password_hash,
-      // No es necesario especificar el rol, se usará el valor por defecto 'user'
     });
     res.status(201).json({ message: 'Usuario registrado con éxito.', userId: newUser.id });
   } catch (error) {
