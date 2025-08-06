@@ -8,6 +8,9 @@ import { calculateCalories } from '../utils/helpers';
 import Spinner from '../components/Spinner';
 import useAppStore from '../store/useAppStore';
 import { useToast } from '../hooks/useToast';
+// --- INICIO DE LA MODIFICACIÓN ---
+import { getPersonalRecords } from '../services/personalRecordService';
+// --- FIN DE LA MODIFICACIÓN ---
 
 const DailyDetailView = ({ logs, onClose }) => {
     const { userProfile, deleteWorkoutLog } = useAppStore(state => ({
@@ -39,15 +42,12 @@ const DailyDetailView = ({ logs, onClose }) => {
         }
     };
     
-    // --- INICIO DE LA CORRECCIÓN ---
     const cancelDelete = () => {
         setShowDeleteConfirm(false);
-        setLogToDelete(null); // Restablece el estado para que el log vuelva a ser visible
+        setLogToDelete(null);
     };
-    // --- FIN DE LA CORRECCIÓN ---
 
     const latestWeight = userProfile?.weight || 75;
-    // La lógica de filtrado ahora funciona correctamente al cancelar
     const visibleLogs = logs.filter(log => !logToDelete || log.id !== logToDelete.id);
     const totalDuration = visibleLogs.reduce((acc, log) => acc + log.duration_seconds, 0);
     const totalCalories = visibleLogs.reduce((acc, log) => acc + calculateCalories(log.duration_seconds, latestWeight), 0);
@@ -122,7 +122,6 @@ const DailyDetailView = ({ logs, onClose }) => {
         </>
     );
 };
-// ... (El resto del fichero Progress.jsx no necesita cambios)
 
 const CalendarView = ({ setDetailedLog }) => {
     const { workoutLog } = useAppStore(state => ({ workoutLog: state.workoutLog }));
@@ -230,12 +229,12 @@ const Progress = ({ darkMode }) => {
     const [recordsPage, setRecordsPage] = useState(1);
     const [recordsLoading, setRecordsLoading] = useState(true);
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     const fetchRecords = useCallback(async (page) => {
         setRecordsLoading(true);
         try {
-            const response = await fetch(`http://localhost:3001/api/records?page=${page}&limit=6`, { credentials: 'include' });
-            if (!response.ok) throw new Error('Error al cargar los récords');
-            const data = await response.json();
+            // Usamos el servicio en lugar de fetch directamente
+            const data = await getPersonalRecords(page);
             setRecordsData(data);
         } catch (error) {
             console.error(error);
@@ -243,6 +242,7 @@ const Progress = ({ darkMode }) => {
             setRecordsLoading(false);
         }
     }, []);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         if (viewType === 'records') {

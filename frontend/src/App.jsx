@@ -198,7 +198,7 @@ export default function App() {
       )}
 
       <div className="hidden md:block absolute bottom-4 right-4 z-50 bg-bg-secondary/50 text-text-muted text-xs px-2.5 py-1 rounded-full backdrop-blur-sm select-none">
-        v1.3.0
+        v1.3.1
       </div>
     </div>
   );
