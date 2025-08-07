@@ -29,6 +29,13 @@ const WorkoutLogSet = sequelize.define(
       type: DataTypes.DECIMAL(6, 2),
       allowNull: false,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    is_dropset: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
   },
   {
     tableName: 'workout_log_sets',

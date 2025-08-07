@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node start.js",
     "db:migrate": "sequelize-cli db:migrate --env production",
+    "db:migrate:dev": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all --env production",
     "db:seed:undo": "sequelize-cli db:seed:undo:all --env production"
   },

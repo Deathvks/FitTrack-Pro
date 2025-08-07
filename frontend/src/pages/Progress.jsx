@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { ResponsiveContainer, LineChart, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts';
-import { ChevronLeft, ChevronRight, X, ChevronDown, Trash2, BookOpen, TrendingUp, BarChartHorizontal, Trophy } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ChevronDown, Trash2, BookOpen, TrendingUp, BarChartHorizontal, Trophy, Link2, Timer, Flame } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import ConfirmationModal from '../components/ConfirmationModal';
 import ExerciseHistoryModal from './ExerciseHistoryModal';
@@ -8,9 +8,7 @@ import { calculateCalories } from '../utils/helpers';
 import Spinner from '../components/Spinner';
 import useAppStore from '../store/useAppStore';
 import { useToast } from '../hooks/useToast';
-// --- INICIO DE LA MODIFICACIÓN ---
 import { getPersonalRecords } from '../services/personalRecordService';
-// --- FIN DE LA MODIFICACIÓN ---
 
 const DailyDetailView = ({ logs, onClose }) => {
     const { userProfile, deleteWorkoutLog } = useAppStore(state => ({
@@ -47,10 +45,37 @@ const DailyDetailView = ({ logs, onClose }) => {
         setLogToDelete(null);
     };
 
+    const groupExercises = (exercises) => {
+        if (!exercises || exercises.length === 0) return [];
+        const groups = [];
+        let currentGroup = [];
+
+        for (const ex of exercises) {
+            if (currentGroup.length === 0) {
+                currentGroup.push(ex);
+                continue;
+            }
+
+            if (ex.superset_group_id !== null && ex.superset_group_id === currentGroup[0].superset_group_id) {
+                currentGroup.push(ex);
+            } else {
+                groups.push(currentGroup);
+                currentGroup = [ex];
+            }
+        }
+        if (currentGroup.length > 0) {
+            groups.push(currentGroup);
+        }
+        return groups;
+    };
+
     const latestWeight = userProfile?.weight || 75;
     const visibleLogs = logs.filter(log => !logToDelete || log.id !== logToDelete.id);
     const totalDuration = visibleLogs.reduce((acc, log) => acc + log.duration_seconds, 0);
-    const totalCalories = visibleLogs.reduce((acc, log) => acc + calculateCalories(log.duration_seconds, latestWeight), 0);
+    const totalCalories = visibleLogs.reduce((acc, log) => {
+        const calories = log.calories_burned || calculateCalories(log.duration_seconds, latestWeight);
+        return acc + calories;
+    }, 0);
 
     return (
         <>
@@ -71,44 +96,84 @@ const DailyDetailView = ({ logs, onClose }) => {
                     </div>
                     <div className="flex flex-col gap-4 border-t border-glass-border pt-4 max-h-[45vh] overflow-y-auto">
                         <h4 className="font-semibold">Entrenamientos Registrados</h4>
-                        {visibleLogs.map((log) => (
-                            <div key={log.id} className="bg-bg-secondary rounded-md">
-                                <div className="flex justify-between items-center p-3">
-                                    <h5 className="font-bold text-accent">{log.routine_name}</h5>
-                                    <button onClick={() => handleDeleteClick(log)} className="p-2 -m-2 rounded-full text-text-muted hover:bg-red/20 hover:text-red transition">
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                                <div className="px-3 pb-3 space-y-3">
-                                    {log.notes && (
-                                        <div className="bg-bg-primary p-3 rounded-md border-l-2 border-accent">
-                                            <p className="font-semibold text-xs text-accent mb-1">Notas de la sesión</p>
-                                            <p className="text-sm text-text-secondary whitespace-pre-wrap">{log.notes}</p>
-                                        </div>
-                                    )}
-                                    {log.WorkoutLogDetails.map((exercise, exIdx) => (
-                                        <div key={exIdx} className="bg-bg-primary p-3 rounded-md">
-                                            <p className="font-semibold mb-2">{exercise.exercise_name}</p>
-                                            <div className="flex gap-4 text-xs text-text-muted mb-2">
-                                                <div className="flex items-center gap-1"><BarChartHorizontal size={12} /><span>Volumen: <strong>{exercise.total_volume} kg</strong></span></div>
-                                                <div className="flex items-center gap-1"><TrendingUp size={12} /><span>Mejor Set: <strong>{exercise.best_set_weight} kg</strong></span></div>
+                        {visibleLogs.map((log) => {
+                            const exerciseGroups = groupExercises(log.WorkoutLogDetails);
+                            const isCardioOnly = !log.WorkoutLogDetails || log.WorkoutLogDetails.length === 0;
+                            
+                            return (
+                                <div key={log.id} className="bg-bg-secondary rounded-md">
+                                    <div className="flex justify-between items-center p-3">
+                                        <h5 className="font-bold text-accent">{log.routine_name}</h5>
+                                        <button onClick={() => handleDeleteClick(log)} className="p-2 -m-2 rounded-full text-text-muted hover:bg-red/20 hover:text-red transition">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="px-3 pb-3 space-y-3">
+                                        {log.notes && (
+                                            <div className="bg-bg-primary p-3 rounded-md border-l-2 border-accent">
+                                                <p className="font-semibold text-xs text-accent mb-1">Notas de la sesión</p>
+                                                <p className="text-sm text-text-secondary whitespace-pre-wrap">{log.notes}</p>
                                             </div>
-                                            <ul className="space-y-2 text-sm">
-                                                {exercise.WorkoutLogSets && exercise.WorkoutLogSets.length > 0 ? (
-                                                    exercise.WorkoutLogSets.map((set, setIdx) => (
-                                                        <li key={setIdx} className="bg-bg-secondary/50 p-2 rounded">
-                                                            Serie {set.set_number}: <strong>{set.reps} reps</strong> con <strong>{set.weight_kg} kg</strong>
-                                                        </li>
-                                                    ))
-                                                ) : (
-                                                    <li className="text-text-muted">No se registraron series.</li>
-                                                )}
-                                            </ul>
-                                        </div>
-                                    ))}
+                                        )}
+                                        
+                                        {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                        {isCardioOnly ? (
+                                            <div className="bg-bg-primary rounded-md border border-glass-border p-3 flex justify-around text-center">
+                                                <div>
+                                                    <p className="text-xs text-text-secondary flex items-center gap-1"><Timer size={12}/> Duración</p>
+                                                    <p className="font-bold">{Math.round(log.duration_seconds / 60)} min</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-text-secondary flex items-center gap-1"><Flame size={12}/> Calorías</p>
+                                                    <p className="font-bold">{log.calories_burned} kcal</p>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            exerciseGroups.map((group, groupIndex) => (
+                                                <div key={groupIndex} className="bg-bg-primary rounded-md border border-glass-border">
+                                                    {group.length > 1 && (
+                                                        <div className="flex items-center gap-2 p-2 text-accent text-sm font-semibold border-b border-glass-border bg-accent/10">
+                                                            <Link2 size={14} />
+                                                            <span>Superserie</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="p-3">
+                                                        {group.map((exercise, exIdx) => (
+                                                            <div key={exIdx} className={exIdx > 0 ? 'mt-3 pt-3 border-t border-glass-border' : ''}>
+                                                                <p className="font-semibold">{exercise.exercise_name}</p>
+                                                                <div className="flex gap-4 text-xs text-text-muted my-2">
+                                                                    <div className="flex items-center gap-1"><BarChartHorizontal size={12} /><span>Volumen: <strong>{exercise.total_volume} kg</strong></span></div>
+                                                                    <div className="flex items-center gap-1"><TrendingUp size={12} /><span>Mejor Set: <strong>{exercise.best_set_weight} kg</strong></span></div>
+                                                                </div>
+                                                                <ul className="space-y-1 text-sm">
+                                                                    {exercise.WorkoutLogSets && exercise.WorkoutLogSets.length > 0 ? (
+                                                                        exercise.WorkoutLogSets.map((set, setIdx) => (
+                                                                            <li key={setIdx} className="flex items-center justify-between bg-bg-secondary/50 p-2 rounded text-xs">
+                                                                                <span>
+                                                                                    Serie {set.set_number}: <strong>{set.reps} reps</strong> con <strong>{set.weight_kg} kg</strong>
+                                                                                </span>
+                                                                                {set.is_dropset && (
+                                                                                    <span className="bg-accent/20 text-accent font-bold px-2 py-0.5 rounded-full text-[10px]">
+                                                                                        DROPSET
+                                                                                    </span>
+                                                                                )}
+                                                                            </li>
+                                                                        ))
+                                                                    ) : (
+                                                                        <li className="text-text-muted text-xs">No se registraron series.</li>
+                                                                    )}
+                                                                </ul>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                        {/* --- FIN DE LA MODIFICACIÓN --- */}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </GlassCard>
             </div>
@@ -229,11 +294,9 @@ const Progress = ({ darkMode }) => {
     const [recordsPage, setRecordsPage] = useState(1);
     const [recordsLoading, setRecordsLoading] = useState(true);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     const fetchRecords = useCallback(async (page) => {
         setRecordsLoading(true);
         try {
-            // Usamos el servicio en lugar de fetch directamente
             const data = await getPersonalRecords(page);
             setRecordsData(data);
         } catch (error) {
@@ -242,7 +305,6 @@ const Progress = ({ darkMode }) => {
             setRecordsLoading(false);
         }
     }, []);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     useEffect(() => {
         if (viewType === 'records') {

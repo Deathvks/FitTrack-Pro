@@ -150,7 +150,8 @@ const useAppStore = create((set, get) => ({
         setsDone: Array.from({ length: ex.sets }, (_, i) => ({
             set_number: i + 1,
             reps: '',
-            weight_kg: ''
+            weight_kg: '',
+            is_dropset: false,
         }))
     }));
 
@@ -167,6 +168,23 @@ const useAppStore = create((set, get) => ({
     set(newState);
     setWorkoutInStorage(newState);
   },
+
+  // --- INICIO DE LA MODIFICACIÓN ---
+  startSimpleWorkout: (workoutName) => {
+    const newState = {
+      activeWorkout: {
+        routineId: null, // No está basado en una rutina
+        routineName: workoutName,
+        exercises: [], // No tiene ejercicios predefinidos
+      },
+      workoutStartTime: null,
+      isWorkoutPaused: true,
+      workoutAccumulatedTime: 0,
+    };
+    set(newState);
+    setWorkoutInStorage(newState);
+  },
+  // --- FIN DE LA MODIFICACIÓN ---
 
   togglePauseWorkout: () => {
     const { isWorkoutPaused, workoutStartTime, workoutAccumulatedTime } = get();
@@ -219,6 +237,44 @@ const useAppStore = create((set, get) => ({
     set(newState);
     setWorkoutInStorage({ ...get(), ...newState });
   },
+
+  addDropset: (exIndex, setIndex) => {
+    const session = get().activeWorkout;
+    if (!session) return;
+
+    const newExercises = [...session.exercises];
+    const targetExercise = newExercises[exIndex];
+    const parentSet = targetExercise.setsDone[setIndex];
+
+    const newDropset = {
+        set_number: parentSet.set_number,
+        reps: '',
+        weight_kg: '',
+        is_dropset: true,
+    };
+
+    targetExercise.setsDone.splice(setIndex + 1, 0, newDropset);
+    
+    const newState = { activeWorkout: { ...session, exercises: newExercises } };
+    set(newState);
+    setWorkoutInStorage({ ...get(), ...newState });
+  },
+
+  removeDropset: (exIndex, setIndex) => {
+    const session = get().activeWorkout;
+    if (!session) return;
+
+    const newExercises = [...session.exercises];
+    const targetExercise = newExercises[exIndex];
+
+    if (targetExercise.setsDone[setIndex]?.is_dropset) {
+        targetExercise.setsDone.splice(setIndex, 1);
+    }
+    
+    const newState = { activeWorkout: { ...session, exercises: newExercises } };
+    set(newState);
+    setWorkoutInStorage({ ...get(), ...newState });
+  },
   
   openRestModal: () => {
     set({ isResting: true });
@@ -256,20 +312,15 @@ const useAppStore = create((set, get) => ({
       return newState;
     });
   },
-  
-  // --- INICIO DE LA MODIFICACIÓN ---
-  // Esta nueva acción resetea el tiempo pero mantiene el modal abierto
+
   resetRestTimer: () => {
-    // Limpiamos los datos del timer del localStorage
     localStorage.removeItem('restTimerEndTime');
     localStorage.removeItem('restTimerInitialDuration');
-    // Actualizamos el estado, manteniendo isResting en true
     set({
       restTimerEndTime: null,
       restTimerInitialDuration: null,
     });
   },
-  // --- FIN DE LA MODIFICACIÓN ---
 
   stopRestTimer: () => {
     clearRestTimerInStorage();

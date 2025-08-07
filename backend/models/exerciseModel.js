@@ -17,16 +17,14 @@ const RoutineExercise = sequelize.define(
         key: 'id',
       }
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
-    exercise_list_id: { // Referencia a la tabla maestra de ejercicios
+    exercise_list_id: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Puede ser nulo si es un ejercicio personalizado
+      allowNull: true,
       references: {
         model: 'exercise_list',
         key: 'id',
       }
     },
-    // --- FIN ---
     name: {
       type: DataTypes.STRING(255),
       allowNull: false,
@@ -43,6 +41,17 @@ const RoutineExercise = sequelize.define(
       type: DataTypes.STRING(50),
       allowNull: false,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    superset_group_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    exercise_order: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
   },
   {
     tableName: 'routine_exercises',

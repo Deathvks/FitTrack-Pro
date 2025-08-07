@@ -12,14 +12,16 @@ export const getWorkoutHistory = async (req, res, next) => {
         as: 'WorkoutLogDetails',
         include: [{
           model: WorkoutLogSet,
-          as: 'WorkoutLogSets'
-        }]
+          as: 'WorkoutLogSets',
+          order: [['set_number', 'ASC']],
+        }],
+        order: [['id', 'ASC']],
       }],
       order: [['workout_date', 'DESC']],
     });
     res.json(history);
   } catch (error) {
-    next(error); // Pasar el error al middleware
+    next(error);
   }
 };
 
@@ -40,7 +42,7 @@ export const logWorkoutSession = async (req, res, next) => {
       routine_id: routineId,
       workout_date: new Date(),
       duration_seconds,
-      calories_burned,
+      calories_burned, // <-- CAMBIO: Se añade el valor de calorías
       notes
     }, { transaction: t });
 
@@ -66,6 +68,7 @@ export const logWorkoutSession = async (req, res, next) => {
         exercise_name: exercise.exerciseName,
         total_volume: totalVolume,
         best_set_weight: bestSetWeight,
+        superset_group_id: exercise.superset_group_id,
       }, { transaction: t });
 
       if (exercise.setsDone && exercise.setsDone.length > 0) {
@@ -73,7 +76,8 @@ export const logWorkoutSession = async (req, res, next) => {
           log_detail_id: newLogDetail.id,
           set_number: set.set_number,
           reps: set.reps,
-          weight_kg: set.weight_kg
+          weight_kg: set.weight_kg,
+          is_dropset: set.is_dropset || false,
         }));
         await WorkoutLogSet.bulkCreate(setsToCreate, { transaction: t });
       }
@@ -112,7 +116,7 @@ export const logWorkoutSession = async (req, res, next) => {
     });
   } catch (error) {
     await t.rollback();
-    next(error); // Pasar el error al middleware
+    next(error);
   }
 };
 
@@ -175,7 +179,7 @@ export const deleteWorkoutLog = async (req, res, next) => {
 
   } catch (error) {
     await t.rollback();
-    next(error); // Pasar el error al middleware
+    next(error);
   }
 };
 

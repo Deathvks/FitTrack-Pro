@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Edit, Trash2, Play, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, CheckCircle, Link2 } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import ConfirmationModal from '../components/ConfirmationModal';
 import RoutineEditor from './RoutineEditor';
@@ -26,13 +26,43 @@ const Routines = ({ setView }) => {
   const completedToday = useMemo(() => {
     if (!Array.isArray(workoutLog)) return [];
     const today = new Date();
-    // Creamos un Set de IDs de rutinas completadas hoy para una búsqueda más eficiente
     return new Set(
       workoutLog
         .filter(log => isSameDay(log.workout_date, today) && log.routine_id != null)
         .map(log => log.routine_id)
     );
   }, [workoutLog]);
+
+  // --- INICIO DE LA CORRECCIÓN: Lógica de agrupación corregida ---
+  const groupExercises = (exercises) => {
+    if (!exercises || exercises.length === 0) return [];
+    
+    const groups = [];
+    let currentGroup = [];
+
+    for (const ex of exercises) {
+        if (currentGroup.length === 0) {
+            currentGroup.push(ex);
+            continue;
+        }
+
+        // Si el ejercicio actual tiene el mismo ID de grupo que el anterior del grupo, se añade.
+        if (ex.superset_group_id !== null && ex.superset_group_id === currentGroup[0].superset_group_id) {
+            currentGroup.push(ex);
+        } else {
+            // Si no, se cierra el grupo anterior y se empieza uno nuevo.
+            groups.push(currentGroup);
+            currentGroup = [ex];
+        }
+    }
+
+    if (currentGroup.length > 0) {
+        groups.push(currentGroup);
+    }
+    
+    return groups;
+  };
+  // --- FIN DE LA CORRECCIÓN ---
 
   const handleSave = async (routineToSave) => {
     setIsLoading(true);
@@ -89,8 +119,9 @@ const Routines = ({ setView }) => {
 
       <div className="flex flex-col gap-6">
         {routines && routines.length > 0 ? routines.map(routine => {
-          // Ahora comprobamos si el ID de la rutina está en el Set de completadas
           const isCompleted = completedToday.has(routine.id);
+          const exerciseGroups = groupExercises(routine.RoutineExercises);
+
           return (
             <GlassCard key={routine.id} className="p-6 flex flex-col gap-4">
               <div className="flex justify-between items-start pb-4 border-b border-glass-border">
@@ -107,15 +138,24 @@ const Routines = ({ setView }) => {
                   </button>
                 </div>
               </div>
-
-              {routine.RoutineExercises && routine.RoutineExercises.length > 0 && (
+              
+              {exerciseGroups.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-text-secondary mb-2">Ejercicios:</h3>
-                  <ul className="flex flex-col gap-2 pl-4 list-disc text-sm text-text-secondary">
-                    {routine.RoutineExercises.map(ex => (
-                      <li key={ex.id}>{ex.name} ({ex.sets}x{ex.reps})</li>
+                  <div className="flex flex-col gap-2">
+                    {exerciseGroups.map((group, groupIndex) => (
+                      <div key={groupIndex} className="flex items-start gap-2">
+                        {group.length > 1 && <Link2 size={16} className="text-accent flex-shrink-0 mt-1" />}
+                        <ul className={`pl-2 ${group.length > 1 ? 'list-none' : 'list-disc'}`}>
+                          {group.map((ex) => (
+                            <li key={ex.id} className="text-sm text-text-secondary">
+                              {ex.name} ({ex.sets}x{ex.reps})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               )}
 
@@ -131,17 +171,7 @@ const Routines = ({ setView }) => {
                   : 'bg-accent text-bg-secondary hover:scale-[1.02]'
                 }`}
               >
-                {isCompleted ? (
-                  <>
-                    <CheckCircle size={20} />
-                    <span>Completada Hoy</span>
-                  </>
-                ) : (
-                  <>
-                    <Play size={20} />
-                    <span>Empezar Entrenamiento</span>
-                  </>
-                )}
+                {isCompleted ? <><CheckCircle size={20} /><span>Completada Hoy</span></> : <><Play size={20} /><span>Empezar Entrenamiento</span></>}
               </button>
             </GlassCard>
           )

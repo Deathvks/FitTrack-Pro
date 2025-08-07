@@ -21,8 +21,6 @@ const WorkoutLogDetail = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    // --- ESTAS SON LAS LÍNEAS IMPORTANTES ---
-    // Definen las nuevas columnas que añadimos a la base de datos
     total_volume: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: true,
@@ -31,7 +29,12 @@ const WorkoutLogDetail = sequelize.define(
       type: DataTypes.DECIMAL(6, 2),
       allowNull: true,
     },
-    // --- FIN DE LA SECCIÓN IMPORTANTE ---
+    // --- LÍNEA AÑADIDA ---
+    // Guarda el ID del grupo de la superserie para poder agruparlos en el historial.
+    superset_group_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     tableName: 'workout_log_details',

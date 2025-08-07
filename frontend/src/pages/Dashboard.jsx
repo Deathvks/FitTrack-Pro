@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Dumbbell, Target, Clock, Flame, Plus, Play, ArrowUp, ArrowDown, Minus, Edit } from 'lucide-react';
+import { Dumbbell, Target, Clock, Flame, Plus, Play, ArrowUp, ArrowDown, Minus, Edit, Footprints, Bike, Activity, Repeat } from 'lucide-react'; // <-- Iconos actualizados
 import GlassCard from '../components/GlassCard';
 import StatCard from '../components/StatCard';
 import BodyWeightModal from '../components/BodyWeightModal';
@@ -7,7 +7,6 @@ import { calculateCalories, isSameDay } from '../utils/helpers';
 import useAppStore from '../store/useAppStore';
 
 const Dashboard = ({ setView }) => {
-    // --- INICIO DE LA MODIFICACIÓN ---
     const {
         routines,
         workoutLog,
@@ -15,7 +14,8 @@ const Dashboard = ({ setView }) => {
         userProfile,
         logBodyWeight,
         updateTodayBodyWeight,
-        startWorkout // 1. Obtenemos la acción para iniciar el entreno
+        startWorkout,
+        startSimpleWorkout
     } = useAppStore(state => ({
         routines: state.routines,
         workoutLog: state.workoutLog,
@@ -24,8 +24,8 @@ const Dashboard = ({ setView }) => {
         logBodyWeight: state.logBodyWeight,
         updateTodayBodyWeight: state.updateTodayBodyWeight,
         startWorkout: state.startWorkout,
+        startSimpleWorkout: state.startSimpleWorkout,
     }));
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const [showWeightModal, setShowWeightModal] = useState(false);
 
@@ -65,10 +65,10 @@ const Dashboard = ({ setView }) => {
 
     const latestWeight = sortedWeightLog.length > 0 ? parseFloat(sortedWeightLog[0].weight_kg) : null;
 
-    const totalCaloriesWeekly = weeklyLogs.reduce((acc, log) =>
-        acc + calculateCalories(log.duration_seconds, latestWeight ?? 75),
-        0
-    );
+    const totalCaloriesWeekly = weeklyLogs.reduce((acc, log) => {
+        const calories = log.calories_burned || calculateCalories(log.duration_seconds, latestWeight ?? 75);
+        return acc + calories;
+    }, 0);
 
     const calorieTarget = useMemo(() => {
         if (!userProfile || !latestWeight || !userProfile.goal) return null;
@@ -82,13 +82,15 @@ const Dashboard = ({ setView }) => {
         return Math.round(target);
     }, [userProfile, latestWeight]);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // 2. Creamos una función que primero inicia el entreno y LUEGO cambia la vista
     const handleStartWorkout = (routine) => {
         startWorkout(routine);
         setView('workout');
     };
-    // --- FIN DE LA MODIFICACIÓN ---
+
+    const handleStartSimpleWorkout = (workoutName) => {
+        startSimpleWorkout(workoutName);
+        setView('workout');
+    };
 
 
     return (
@@ -103,28 +105,52 @@ const Dashboard = ({ setView }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                <GlassCard className="p-6 flex flex-col gap-4">
-                    <h2 className="text-xl font-bold">Iniciar un Entrenamiento</h2>
-                    <div className="flex flex-col gap-3">
-                        {routines.length > 0 ? (
-                            routines.slice(0, 3).map(routine => (
-                                // --- INICIO DE LA MODIFICACIÓN ---
-                                // 3. El botón ahora llama a nuestra nueva función
-                                <button key={routine.id} onClick={() => handleStartWorkout(routine)} className="flex justify-between items-center w-full p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
-                                    <span className="font-semibold">{routine.name}</span>
-                                    <Play size={20} />
-                                </button>
-                                // --- FIN DE LA MODIFICACIÓN ---
-                            ))
-                        ) : (
-                            <p className="text-text-muted text-center py-4">No tienes rutinas. ¡Crea una para empezar!</p>
-                        )}
-                    </div>
-                    <button onClick={() => setView('routines')} className="flex items-center justify-center gap-2 w-full rounded-md bg-accent/10 text-accent font-semibold py-3 border border-accent/20 hover:bg-accent/20 transition-colors">
-                        <Plus size={20} />
-                        <span>Gestionar Rutinas</span>
-                    </button>
-                </GlassCard>
+                <div className="flex flex-col gap-6">
+                    <GlassCard className="p-6 flex flex-col gap-4">
+                        <h2 className="text-xl font-bold">Iniciar un Entrenamiento</h2>
+                        <div className="flex flex-col gap-3">
+                            {routines.length > 0 ? (
+                                routines.slice(0, 2).map(routine => (
+                                    <button key={routine.id} onClick={() => handleStartWorkout(routine)} className="flex justify-between items-center w-full p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
+                                        <span className="font-semibold">{routine.name}</span>
+                                        <Play size={20} />
+                                    </button>
+                                ))
+                            ) : (
+                                <p className="text-text-muted text-center py-4">No tienes rutinas. ¡Crea una para empezar!</p>
+                            )}
+                        </div>
+                        <button onClick={() => setView('routines')} className="flex items-center justify-center gap-2 w-full rounded-md bg-accent/10 text-accent font-semibold py-3 border border-accent/20 hover:bg-accent/20 transition-colors">
+                            <Plus size={20} />
+                            <span>Ver todas mis rutinas</span>
+                        </button>
+                    </GlassCard>
+
+                    <GlassCard className="p-6 flex flex-col gap-4">
+                        <h2 className="text-xl font-bold">Cardio Rápido</h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+                            <button onClick={() => handleStartSimpleWorkout('Cardio: Cinta')} className="flex items-center justify-center gap-3 p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
+                                <Footprints size={20} />
+                                <span className="font-semibold">Cinta</span>
+                            </button>
+                             <button onClick={() => handleStartSimpleWorkout('Cardio: Bici')} className="flex items-center justify-center gap-3 p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
+                                <Bike size={20} />
+                                <span className="font-semibold">Bici</span>
+                            </button>
+                            {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                            <button onClick={() => handleStartSimpleWorkout('Cardio: Elíptica')} className="flex items-center justify-center gap-3 p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
+                                <Activity size={20} />
+                                <span className="font-semibold">Elíptica</span>
+                            </button>
+                             <button onClick={() => handleStartSimpleWorkout('Cardio: Comba')} className="flex items-center justify-center gap-3 p-4 rounded-md border border-glass-border hover:bg-white/10 transition-colors">
+                                <Repeat size={20} />
+                                <span className="font-semibold">Comba</span>
+                            </button>
+                            {/* --- FIN DE LA MODIFICACIÓN --- */}
+                        </div>
+                    </GlassCard>
+                </div>
+
 
                 <GlassCard className="p-6 flex flex-col gap-4">
                     <h2 className="text-xl font-bold">Registro de Peso</h2>
@@ -141,7 +167,7 @@ const Dashboard = ({ setView }) => {
                             const currentWeight = parseFloat(log.weight_kg);
                             const prevLog = sortedWeightLog[index + 1];
                             const prevWeight = prevLog ? parseFloat(prevLog.weight_kg) : null;
-                            const change = prevWeight !== null ? currentWeight - prevWeight : 0;
+                            const change = prevWeight !== null ? currentWeight - prevWeight : null;
 
                             const status = change > 0.01 ? 'up' : change < -0.01 ? 'down' : 'same';
                             const isGoodChange = (userProfile?.goal === 'lose' && status === 'down') || (userProfile?.goal === 'gain' && status === 'up');

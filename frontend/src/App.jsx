@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Home, Dumbbell, BarChart2, Settings, LogOut, Zap } from 'lucide-react';
 import useAppStore from './store/useAppStore';
 
@@ -12,7 +12,7 @@ import LoginScreen from './pages/LoginScreen';
 import RegisterScreen from './pages/RegisterScreen';
 import OnboardingScreen from './pages/OnboardingScreen';
 import ProfileEditor from './pages/ProfileEditor';
-import AccountEditor from './pages/AccountEditor'; // <-- MODIFICACIÓN: Importar nuevo componente
+import AccountEditor from './pages/AccountEditor';
 import PRToast from './components/PRToast';
 import ConfirmationModal from './components/ConfirmationModal';
 import AdminPanel from './pages/AdminPanel.jsx';
@@ -35,6 +35,17 @@ export default function App() {
     return localStorage.getItem('lastView') || 'dashboard';
   });
   
+  // --- INICIO DE LA MODIFICACIÓN ---
+  const mainContentRef = useRef(null);
+  
+  useEffect(() => {
+    // Cada vez que la vista cambia, resetea el scroll del contenedor principal
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [view]);
+  // --- FIN DE LA MODIFICACIÓN ---
+
   useEffect(() => {
     localStorage.setItem('lastView', view);
   }, [view]);
@@ -120,7 +131,6 @@ export default function App() {
       case 'workout': return <Workout timer={timer} setView={navigate} />;
       case 'settings': return <SettingsScreen theme={theme} setTheme={setTheme} setView={navigate} onLogoutClick={handleLogoutClick} />;
       case 'profileEditor': return <ProfileEditor onCancel={() => navigate('settings')} />;
-      // --- MODIFICACIÓN: Añadir la nueva vista de edición de cuenta ---
       case 'accountEditor': return <AccountEditor onCancel={() => navigate('settings')} />;
       case 'adminPanel': return <AdminPanel onCancel={() => navigate('settings')} />;
       default: return <Dashboard setView={navigate} />;
@@ -163,7 +173,9 @@ export default function App() {
         </button>
       </nav>
 
-      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
+      {/* --- INICIO DE LA MODIFICACIÓN --- */}
+      <main ref={mainContentRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
+      {/* --- FIN DE LA MODIFICACIÓN --- */}
         {renderView()}
       </main>
 
