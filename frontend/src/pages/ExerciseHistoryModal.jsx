@@ -1,96 +1,62 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { searchExercises } from '../services/exerciseService';
+import React, { useMemo } from 'react';
+import { X } from 'lucide-react';
+import GlassCard from '../components/GlassCard';
 
-const ExerciseSearchInput = ({ value, onChange, onSelect }) => {
-    const [results, setResults] = useState([]);
-    const [isOpen, setIsOpen] = useState(false);
-    const searchRef = useRef(null);
-    const hasInteracted = useRef(false);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (searchRef.current && !searchRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const fetchExercises = useCallback(async (searchQuery) => {
-        if (searchQuery.length < 2) {
-            setResults([]);
-            setIsOpen(false);
-            return;
-        }
-        try {
-            const data = await searchExercises(searchQuery);
-            
-            if (data.length > 0) {
-                setResults(data);
-                setIsOpen(true);
-            } else {
-                setResults([]);
-                setIsOpen(false);
-            }
-        } catch (error) {
-            console.error(error);
-            setResults([]);
-            setIsOpen(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!hasInteracted.current) {
-            return;
-        }
-
-        const handler = setTimeout(() => {
-            fetchExercises(value);
-        }, 300);
-
-        return () => clearTimeout(handler);
-    }, [value, fetchExercises]);
-
-    const handleSelect = (exercise) => {
-        hasInteracted.current = false;
-        onSelect(exercise);
-        setIsOpen(false);
-    };
-
-    const handleInputChange = (e) => {
-        hasInteracted.current = true;
-        onChange(e);
-    };
-    
-    const baseInputClasses = "w-full bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition";
+const ExerciseHistoryModal = ({ exerciseName, workoutLog, onClose }) => {
+    const history = useMemo(() => {
+        return workoutLog
+            .map(log => ({
+                date: new Date(log.workout_date),
+                details: log.WorkoutLogDetails.find(detail => detail.exercise_name === exerciseName),
+            }))
+            .filter(entry => entry.details)
+            .sort((a, b) => b.date.getTime() - a.date.getTime()); 
+    }, [exerciseName, workoutLog]);
 
     return (
-        <div className="relative w-full" ref={searchRef}>
-            <input
-                type="text"
-                value={value}
-                onChange={handleInputChange}
-                onFocus={() => { if(value) hasInteracted.current = true; }}
-                placeholder="Buscar o escribir ejercicio..."
-                className={baseInputClasses}
-            />
-            {isOpen && results.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-bg-secondary border border-glass-border rounded-md shadow-lg max-h-60 overflow-y-auto z-10">
-                    {results.map(ex => (
-                        <button
-                            key={ex.id}
-                            type="button"
-                            onClick={() => handleSelect(ex)}
-                            className="block w-full text-left px-4 py-2 hover:bg-accent-transparent transition-colors"
-                        >
-                            {ex.name} <span className="text-xs text-text-muted">({ex.muscle_group})</span>
-                        </button>
-                    ))}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]">
+            <GlassCard className="relative w-full max-w-lg p-6 flex flex-col gap-4 m-4">
+                <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary"><X size={20} /></button>
+                
+                <div className="text-center pb-4 border-b border-glass-border">
+                    <h3 className="text-xl font-bold">Historial de {exerciseName}</h3>
                 </div>
-            )}
+
+                <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
+                    {history.length > 0 ? (
+                        history.map((entry, index) => (
+                            <div key={index} className="bg-bg-secondary p-4 rounded-md">
+                                <p className="font-bold text-accent mb-2">
+                                    {entry.date.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                </p>
+                                <ul className="space-y-1 text-sm">
+                                    {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                                    {entry.details.WorkoutLogSets
+                                        .slice() // Crea una copia para no mutar el estado original
+                                        .sort((a, b) => a.set_number - b.set_number) // Ordena las series por su número
+                                        .map(set => (
+                                            <li key={set.id} className="bg-bg-primary p-2 rounded flex justify-between items-center">
+                                                <span>
+                                                    Serie {set.set_number}: <strong>{set.reps} reps</strong> con <strong>{set.weight_kg} kg</strong>
+                                                </span>
+                                                {set.is_dropset && (
+                                                    <span className="bg-accent/20 text-accent font-bold px-2 py-0.5 rounded-full text-[10px]">
+                                                        DROPSET
+                                                    </span>
+                                                )}
+                                            </li>
+                                        ))}
+                                    {/* --- FIN DE LA MODIFICACIÓN --- */}
+                                </ul>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-text-muted py-8">No hay historial registrado para este ejercicio.</p>
+                    )}
+                </div>
+            </GlassCard>
         </div>
     );
 };
 
-export default ExerciseSearchInput;
+export default ExerciseHistoryModal;
