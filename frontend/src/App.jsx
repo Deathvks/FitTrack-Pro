@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Home, Dumbbell, BarChart2, Settings, LogOut, Zap } from 'lucide-react';
 import useAppStore from './store/useAppStore';
 
-// --- Importaciones ---
 import Dashboard from './pages/Dashboard';
 import Progress from './pages/Progress';
 import Routines from './pages/Routines';
@@ -26,6 +25,7 @@ export default function App() {
     fetchInitialData,
     handleLogout: performLogout,
     activeWorkout,
+    workoutStartTime, // <-- 1. Obtener el estado del inicio del cronómetro
   } = useAppStore();
 
   const [view, setView] = useState(() => {
@@ -35,16 +35,13 @@ export default function App() {
     return localStorage.getItem('lastView') || 'dashboard';
   });
   
-  // --- INICIO DE LA MODIFICACIÓN ---
   const mainContentRef = useRef(null);
   
   useEffect(() => {
-    // Cada vez que la vista cambia, resetea el scroll del contenedor principal
     if (mainContentRef.current) {
       mainContentRef.current.scrollTop = 0;
     }
   }, [view]);
-  // --- FIN DE LA MODIFICACIÓN ---
 
   useEffect(() => {
     localStorage.setItem('lastView', view);
@@ -53,7 +50,7 @@ export default function App() {
   const [isLoginView, setIsLoginView] = useState(true);
   const [theme, setThemeState] = useState(() => localStorage.getItem('theme') || 'system');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { workoutStartTime, isWorkoutPaused, workoutAccumulatedTime } = useAppStore();
+  const { isWorkoutPaused, workoutAccumulatedTime } = useAppStore();
   const [timer, setTimer] = useState(0);
 
   useEffect(() => {
@@ -173,9 +170,7 @@ export default function App() {
         </button>
       </nav>
 
-      {/* --- INICIO DE LA MODIFICACIÓN --- */}
       <main ref={mainContentRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0">
-      {/* --- FIN DE LA MODIFICACIÓN --- */}
         {renderView()}
       </main>
 
@@ -199,7 +194,9 @@ export default function App() {
         />
       )}
 
-      {activeWorkout && view !== 'workout' && (
+      {/* --- INICIO DE LA MODIFICACIÓN --- */}
+      {/* 2. Añadir la condición 'workoutStartTime' */}
+      {activeWorkout && workoutStartTime && view !== 'workout' && (
         <button
           onClick={() => navigate('workout')}
           className="fixed bottom-24 right-4 md:bottom-10 md:right-10 z-50 flex items-center gap-3 px-4 py-3 rounded-full bg-accent text-bg-secondary font-semibold shadow-lg animate-[fade-in-up_0.5s_ease-out] transition-transform hover:scale-105"
@@ -208,6 +205,7 @@ export default function App() {
           <span>Volver al Entreno</span>
         </button>
       )}
+      {/* --- FIN DE LA MODIFICACIÓN --- */}
 
       <div className="hidden md:block absolute bottom-4 right-4 z-50 bg-bg-secondary/50 text-text-muted text-xs px-2.5 py-1 rounded-full backdrop-blur-sm select-none">
         v2.0.1

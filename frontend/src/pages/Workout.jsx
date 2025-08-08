@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, Play, Pause, Square, FileText, Clock, Link2, CornerDownRight, X } from 'lucide-react';
+import { ChevronLeft, Play, Pause, Square, FileText, Clock, Link2, CornerDownRight, X, Repeat } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import ConfirmationModal from '../components/ConfirmationModal';
 import RestTimerModal from '../components/RestTimerModal';
 import CalorieInputModal from '../components/CalorieInputModal';
+import ExerciseReplaceModal from './ExerciseReplaceModal';
 import useAppStore from '../store/useAppStore';
 import { useToast } from '../hooks/useToast';
 import { calculateCalories } from '../utils/helpers';
@@ -43,6 +44,7 @@ const Workout = ({ timer, setView }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [wasTimerRunningOnFinish, setWasTimerRunningOnFinish] = useState(false);
   const [showCalorieModal, setShowCalorieModal] = useState(false);
+  const [exerciseToReplace, setExerciseToReplace] = useState(null);
 
   const exerciseGroups = useMemo(() => {
     if (!activeWorkout || !activeWorkout.exercises || activeWorkout.exercises.length === 0) return [];
@@ -116,7 +118,6 @@ const Workout = ({ timer, setView }) => {
   };
 
   const handleCalorieInputComplete = async (calories) => {
-    // Para entrenos de cardio, no es necesario haber llenado series
     const isCardioOnly = !activeWorkout.exercises || activeWorkout.exercises.length === 0;
 
     const isAnySetFilled = isCardioOnly || activeWorkout.exercises.some(ex =>
@@ -201,10 +202,19 @@ const Workout = ({ timer, setView }) => {
                 {group.map(ex => {
                     const exIndex = activeWorkout.exercises.findIndex(e => e === ex);
                     return (
-                    <div key={ex.id || exIndex} className="p-4 bg-bg-secondary rounded-md">
-                        <div className="pb-4 border-b border-glass-border mb-4">
-                        <h2 className="text-xl font-bold">{ex.name}</h2>
-                        <p className="text-sm text-text-muted">Objetivo: {ex.sets} x {ex.reps} reps</p>
+                    <div key={ex.id || exIndex} className="p-4 bg-bg-secondary rounded-md border border-glass-border">
+                        <div className="flex justify-between items-center pb-4 border-b border-glass-border mb-4">
+                            <div>
+                                <h2 className="text-xl font-bold">{ex.name}</h2>
+                                <p className="text-sm text-text-muted">Objetivo: {ex.sets} x {ex.reps} reps</p>
+                            </div>
+                            <button 
+                                onClick={() => setExerciseToReplace(exIndex)}
+                                className="p-2 rounded-full text-text-muted hover:bg-white/10 hover:text-accent transition"
+                                title="Sustituir ejercicio"
+                            >
+                                <Repeat size={18} />
+                            </button>
                         </div>
                         <div className="grid grid-cols-[auto_1fr_1fr_auto_auto] gap-4 text-center text-xs font-bold text-text-secondary mb-2 px-2">
                             <span>SERIE</span>
@@ -288,6 +298,13 @@ const Workout = ({ timer, setView }) => {
             isSaving={isSaving}
         />
       }
+
+      {exerciseToReplace !== null && (
+        <ExerciseReplaceModal 
+            exerciseIndex={exerciseToReplace}
+            onClose={() => setExerciseToReplace(null)}
+        />
+      )}
 
       {showCancelModal &&
         <ConfirmationModal

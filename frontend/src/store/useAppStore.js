@@ -169,13 +169,12 @@ const useAppStore = create((set, get) => ({
     setWorkoutInStorage(newState);
   },
 
-  // --- INICIO DE LA MODIFICACIÓN ---
   startSimpleWorkout: (workoutName) => {
     const newState = {
       activeWorkout: {
-        routineId: null, // No está basado en una rutina
+        routineId: null,
         routineName: workoutName,
-        exercises: [], // No tiene ejercicios predefinidos
+        exercises: [],
       },
       workoutStartTime: null,
       isWorkoutPaused: true,
@@ -184,7 +183,6 @@ const useAppStore = create((set, get) => ({
     set(newState);
     setWorkoutInStorage(newState);
   },
-  // --- FIN DE LA MODIFICACIÓN ---
 
   togglePauseWorkout: () => {
     const { isWorkoutPaused, workoutStartTime, workoutAccumulatedTime } = get();
@@ -275,6 +273,28 @@ const useAppStore = create((set, get) => ({
     set(newState);
     setWorkoutInStorage({ ...get(), ...newState });
   },
+
+  // --- INICIO DE LA MODIFICACIÓN ---
+  replaceExercise: (exIndex, newExercise) => {
+    const session = get().activeWorkout;
+    if (!session) return;
+
+    const newExercises = [...session.exercises];
+    const oldExercise = newExercises[exIndex];
+
+    // Sustituye el ejercicio manteniendo las series que ya estaban
+    newExercises[exIndex] = {
+      ...oldExercise, // Mantiene superset_id, order, etc.
+      exercise_list_id: newExercise.id,
+      name: newExercise.name,
+      muscle_group: newExercise.muscle_group,
+    };
+
+    const newState = { activeWorkout: { ...session, exercises: newExercises } };
+    set(newState);
+    setWorkoutInStorage({ ...get(), ...newState });
+  },
+  // --- FIN DE LA MODIFICACIÓN ---
   
   openRestModal: () => {
     set({ isResting: true });

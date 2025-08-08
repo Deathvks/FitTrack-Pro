@@ -1,33 +1,125 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ChevronLeft, Trash2, Save, Link2, X, Plus } from 'lucide-react';
+import { ChevronLeft, Trash2, Save, Link2, X, Plus, ChevronDown } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
-import ExerciseSearchInput from '../components/ExerciseSearchInput';
 import Spinner from '../components/Spinner';
 import { useToast } from '../hooks/useToast';
+import { searchExercises } from '../services/exerciseService';
+
+const muscleGroups = [
+    'Todos', 'Pecho', 'Espalda', 'Piernas', 'Glúteos', 'Hombros', 
+    'Brazos', 'Core', 'Cardio', 'Antebrazo', 'Trapecio'
+];
+
+const ExerciseSearch = ({ exercise, exIndex, onFieldChange, onSelect }) => {
+    const [results, setResults] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+    const searchRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) setIsOpen(false);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const searchTerm = exercise.name || '';
+        const selectedGroup = exercise.filterGroup || 'Todos';
+        
+        const shouldSearch = searchTerm.length >= 2 || selectedGroup !== 'Todos';
+
+        if (!shouldSearch) {
+            setResults([]);
+            setIsOpen(false);
+            return;
+        }
+
+        const handler = setTimeout(async () => {
+            setIsLoading(true);
+            try {
+                const data = await searchExercises(searchTerm, selectedGroup);
+                setResults(data);
+                setIsOpen(true);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setIsLoading(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, [exercise.name, exercise.filterGroup]);
+
+    const handleSelect = (selectedEx) => {
+        onSelect(exIndex, selectedEx);
+        setIsOpen(false);
+    };
+
+    return (
+        <div className="relative w-full" ref={searchRef}>
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    value={exercise.name || ''}
+                    onChange={(e) => onFieldChange(exIndex, 'name', e.target.value)}
+                    onFocus={() => setIsOpen(true)}
+                    placeholder="Buscar o escribir ejercicio..."
+                    className="flex-grow w-full bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition"
+                />
+                <div className="relative flex-shrink-0">
+                    <select 
+                        value={exercise.filterGroup} 
+                        onChange={(e) => onFieldChange(exIndex, 'filterGroup', e.target.value)}
+                        className="appearance-none h-full bg-bg-secondary border border-glass-border rounded-md pl-4 pr-10 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition"
+                    >
+                        {muscleGroups.map(group => (<option key={group} value={group}>{group}</option>))}
+                    </select>
+                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted" />
+                </div>
+            </div>
+            {isOpen && (
+                <div className="absolute top-full mt-2 w-full bg-bg-secondary border border-glass-border rounded-md shadow-lg max-h-48 overflow-y-auto z-10 p-2">
+                    {isLoading && <div className="flex justify-center p-4"><Spinner /></div>}
+                    {!isLoading && results.length > 0 && results.map(exResult => (
+                        <button key={exResult.id} type="button" onClick={() => handleSelect(exResult)} className="block w-full text-left px-3 py-2 hover:bg-accent-transparent transition-colors rounded-md">
+                            {exResult.name} <span className="text-xs text-text-muted">({exResult.muscle_group})</span>
+                        </button>
+                    ))}
+                    {!isLoading && results.length === 0 && ( (exercise.name && exercise.name.length >= 2) || exercise.filterGroup !== 'Todos') && (
+                        <p className="text-center text-text-muted p-4 text-sm">No se encontraron resultados.</p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
     const [editedRoutine, setEditedRoutine] = useState(() => {
-        const initialRoutine = {
+        const initialExercises = (routine.RoutineExercises || routine.exercises || []).map(ex => ({
+            ...ex,
+            tempId: `ex-${Math.random()}`,
+            filterGroup: 'Todos'
+        }));
+        if (initialExercises.length === 0) {
+            initialExercises.push({
+                tempId: `ex-${Math.random()}`, name: '', muscle_group: '', sets: '', reps: '', filterGroup: 'Todos'
+            });
+        }
+        return {
             id: routine.id || null,
             name: routine.name || '',
             description: routine.description || '',
-            exercises: (routine.RoutineExercises || routine.exercises || []).map(ex => ({
-                ...ex,
-                tempId: `ex-${Math.random()}`
-            }))
+            exercises: initialExercises
         };
-        if (initialRoutine.exercises.length === 0) {
-            initialRoutine.exercises = [{
-                tempId: `ex-${Math.random()}`, name: '', muscle_group: '', sets: '', reps: ''
-            }];
-        }
-        return initialRoutine;
     });
 
     const [errors, setErrors] = useState({});
     const { addToast } = useToast();
     const descriptionRef = useRef(null);
-    const CHAR_LIMIT = 250;
 
     useEffect(() => {
         if (descriptionRef.current) {
@@ -38,20 +130,17 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
 
     const handleFieldChange = (exIndex, field, value) => {
         let processedValue = value;
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Para el nombre y el grupo muscular, elimina cualquier número
-        if (field === 'name' || field === 'muscle_group') {
+        if ((field === 'name' || field === 'muscle_group') && typeof value === 'string') {
             processedValue = value.replace(/[0-9]/g, '');
         } 
-        // --- FIN DE LA MODIFICACIÓN ---
-        // Para las repeticiones, permite solo números y guiones
-        else if (field === 'reps') {
+        else if (field === 'reps' && typeof value === 'string') {
             processedValue = value.replace(/[^0-9-]/g, '');
         }
 
         setEditedRoutine(prev => {
             const newExercises = [...prev.exercises];
-            newExercises[exIndex][field] = processedValue;
+            newExercises[exIndex] = { ...newExercises[exIndex], [field]: processedValue };
+            
             if (field === 'name') {
                 newExercises[exIndex].exercise_list_id = null;
             }
@@ -62,8 +151,9 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
     const handleExerciseSelect = (exIndex, selectedExercise) => {
         setEditedRoutine(prev => {
             const newExercises = [...prev.exercises];
+            const currentExercise = newExercises[exIndex];
             newExercises[exIndex] = {
-                ...newExercises[exIndex],
+                ...currentExercise,
                 exercise_list_id: selectedExercise.id,
                 name: selectedExercise.name,
                 muscle_group: selectedExercise.muscle_group,
@@ -77,7 +167,7 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
             ...prev,
             exercises: [
                 ...prev.exercises,
-                { tempId: `ex-${Math.random()}`, name: '', muscle_group: '', sets: '', reps: '' }
+                { tempId: `ex-${Math.random()}`, name: '', muscle_group: '', sets: '', reps: '', filterGroup: 'Todos' }
             ]
         }));
     };
@@ -137,12 +227,14 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
     
             const group = processed.filter(e => e.superset_group_id === ex.superset_group_id);
     
+            // --- INICIO DE LA CORRECCIÓN ---
             if (group.length <= 1) {
                 const newEx = { ...ex };
                 delete newEx.superset_group_id;
                 newEx.exercise_order = 0;
                 return newEx;
             }
+            // --- FIN DE LA CORRECCIÓN ---
     
             return ex;
         });
@@ -194,7 +286,7 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
 
     const handleSave = () => {
         if (!validateRoutine()) {
-            if (editedRoutine.exercises.filter(ex => ex.name.trim() !== '').length > 0) {
+            if (editedRoutine.exercises.filter(ex => ex.name && ex.name.trim() !== '').length > 0) {
                  addToast('Por favor, corrige los errores antes de guardar.', 'error');
             }
             return;
@@ -219,9 +311,12 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
         const finalExercises = [];
         finalGroups.forEach((group, groupIndex) => {
             group.forEach((ex, exInGroupIndex) => {
+                // --- INICIO DE LA CORRECCIÓN ---
                 const restOfEx = { ...ex };
+                delete restOfEx.filterGroup;
                 delete restOfEx.superset_group_id;
                 delete restOfEx.exercise_order;
+                // --- FIN DE LA CORRECCIÓN ---
 
                 finalExercises.push({
                     ...restOfEx,
@@ -254,74 +349,62 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-text-secondary mb-2">Descripción (Opcional)</label>
-                        <textarea ref={descriptionRef} value={editedRoutine.description || ''} onChange={(e) => setEditedRoutine({ ...editedRoutine, description: e.target.value })} className={`${baseInputClasses} resize-none overflow-hidden`} rows="1" maxLength={CHAR_LIMIT}></textarea>
+                        <textarea ref={descriptionRef} value={editedRoutine.description || ''} onChange={(e) => setEditedRoutine({ ...editedRoutine, description: e.target.value })} className={`${baseInputClasses} resize-none overflow-hidden`} rows="1" maxLength={250}></textarea>
                     </div>
                 </div>
 
                 <div className="space-y-4">
                     <h2 className="text-xl font-bold">Ejercicios</h2>
-                    {exerciseGroups.map((group, groupIndex) => (
-                        <div key={groupIndex} className={`p-1 rounded-lg ${group.length > 1 ? 'bg-accent/10 border border-accent/20' : ''}`}>
-                            <div className="flex flex-col">
-                                {group.map((ex, indexInGroup) => {
-                                    const exIndex = editedRoutine.exercises.findIndex(e => e.tempId === ex.tempId);
-                                    
-                                    const isPartOfSuperset = group.length > 1;
-                                    const isFirstInGroup = indexInGroup === 0;
-                                    const canLink = exIndex > 0 && isFirstInGroup;
-                                    const needsMargin = exIndex > 0;
+                    {editedRoutine.exercises.map((ex, exIndex) => {
+                        const isPartOfSuperset = exerciseGroups.some(g => g.some(e => e.tempId === ex.tempId) && g.length > 1);
+                        const currentGroup = exerciseGroups.find(g => g.some(e => e.tempId === ex.tempId)) || [ex];
+                        const isFirstInGroup = currentGroup[0].tempId === ex.tempId;
+                        const canLink = exIndex > 0 && !isPartOfSuperset;
 
-                                    return (
-                                        <div key={ex.tempId} className={`relative ${needsMargin ? 'mt-8' : ''}`}>
-                                            {isFirstInGroup && isPartOfSuperset ? (
-                                                <button 
-                                                    onClick={() => unlinkExercise(exIndex)} 
-                                                    className="absolute -top-4 left-1/2 -translate-x-1/2 p-2 rounded-full bg-red text-white hover:scale-110 transition z-10" 
-                                                    title="Separar superserie"
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            ) : canLink ? (
-                                                <button 
-                                                    onClick={() => linkWithPrevious(exIndex)} 
-                                                    className="absolute -top-4 left-1/2 -translate-x-1/2 p-2 rounded-full bg-accent text-bg-secondary hover:scale-110 transition z-10" 
-                                                    title="Crear superserie con el ejercicio superior"
-                                                >
-                                                    <Link2 size={16} />
-                                                </button>
-                                            ) : null}
-                                            
-                                            <GlassCard className="p-4 bg-bg-secondary/50 relative">
-                                                <div className="flex items-center gap-4 mb-4 pr-8">
-                                                    <ExerciseSearchInput value={ex.name} onChange={(e) => handleFieldChange(exIndex, 'name', e.target.value)} onSelect={(selected) => handleExerciseSelect(exIndex, selected)} />
-                                                </div>
-                                                <button onClick={() => removeExercise(exIndex)} className="absolute top-4 right-4 p-2 rounded-full text-text-muted hover:bg-red/20 hover:text-red transition">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                    <div>
-                                                        <input type="number" placeholder="Series" value={ex.sets || ''} onChange={(e) => handleFieldChange(exIndex, 'sets', e.target.value)} className={baseInputClasses} />
-                                                        {errors.exercises?.[exIndex]?.sets && <p className="form-error-text mt-1">{errors.exercises[exIndex].sets}</p>}
-                                                    </div>
-                                                    <div>
-                                                        <input type="text" placeholder="Reps (ej: 8-12)" value={ex.reps || ''} onChange={(e) => handleFieldChange(exIndex, 'reps', e.target.value)} className={baseInputClasses} />
-                                                        {errors.exercises?.[exIndex]?.reps && <p className="form-error-text mt-1">{errors.exercises[exIndex].reps}</p>}
-                                                    </div>
-                                                    <input type="text" placeholder="Grupo Muscular" value={ex.muscle_group || ''} onChange={(e) => handleFieldChange(exIndex, 'muscle_group', e.target.value)} className={baseInputClasses} />
-                                                </div>
-                                            </GlassCard>
+                        return (
+                            <div key={ex.tempId} className={`relative ${exIndex > 0 ? 'mt-8' : ''}`}>
+                                {isFirstInGroup && isPartOfSuperset ? (
+                                    <button onClick={() => unlinkExercise(exIndex)} className="absolute -top-4 left-1/2 -translate-x-1/2 p-2 rounded-full bg-red text-white hover:scale-110 transition z-10" title="Separar superserie"><X size={16} /></button>
+                                ) : canLink ? (
+                                    <button onClick={() => linkWithPrevious(exIndex)} className="absolute -top-4 left-1/2 -translate-x-1/2 p-2 rounded-full bg-accent text-bg-secondary hover:scale-110 transition z-10" title="Crear superserie con el ejercicio superior"><Link2 size={16} /></button>
+                                ) : null}
+                                
+                                <GlassCard className={`p-4 bg-bg-secondary/50 relative ${isPartOfSuperset && !isFirstInGroup ? 'mt-2' : ''}`}>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="flex-grow">
+                                             <ExerciseSearch 
+                                                exercise={ex}
+                                                exIndex={exIndex}
+                                                onFieldChange={handleFieldChange}
+                                                onSelect={handleExerciseSelect}
+                                            />
                                         </div>
-                                    );
-                                })}
+                                        <div className="flex-shrink-0">
+                                            <button onClick={() => removeExercise(exIndex)} className="p-2 h-full rounded-md text-text-muted hover:bg-red/20 hover:text-red transition">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <input type="number" placeholder="Series" value={ex.sets || ''} onChange={(e) => handleFieldChange(exIndex, 'sets', e.target.value)} className={baseInputClasses} />
+                                            {errors.exercises?.[exIndex]?.sets && <p className="form-error-text mt-1">{errors.exercises[exIndex].sets}</p>}
+                                        </div>
+                                        <div>
+                                            <input type="text" placeholder="Reps (ej: 8-12)" value={ex.reps || ''} onChange={(e) => handleFieldChange(exIndex, 'reps', e.target.value)} className={baseInputClasses} />
+                                            {errors.exercises?.[exIndex]?.reps && <p className="form-error-text mt-1">{errors.exercises[exIndex].reps}</p>}
+                                        </div>
+                                        <input type="text" placeholder="Grupo Muscular" value={ex.muscle_group || ''} onChange={(e) => handleFieldChange(exIndex, 'muscle_group', e.target.value)} className={baseInputClasses} />
+                                    </div>
+                                </GlassCard>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
 
                 <button onClick={addExercise} className="w-full py-3 rounded-md bg-accent/10 text-accent font-semibold border border-accent/20 hover:bg-accent/20 transition flex items-center justify-center gap-2">
-                    <Plus size={18} />
-                    Añadir Ejercicio
+                    <Plus size={18} /> Añadir Ejercicio
                 </button>
 
                 <div className="flex justify-end items-center gap-4 pt-6 border-t border-glass-border">
