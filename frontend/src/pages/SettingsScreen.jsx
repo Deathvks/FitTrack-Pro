@@ -99,7 +99,7 @@ const SettingsScreen = ({ theme, setTheme, setView, onLogoutClick }) => {
                         <span>Cerrar Sesión</span>
                     </button>
                     <p className="text-center text-xs text-text-muted mt-4">
-                        FitTrack Pro v2.0.1
+                        FitTrack Pro v2.0.2
                     </p>
                 </GlassCard>
             </div>
