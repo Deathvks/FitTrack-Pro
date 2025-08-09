@@ -42,7 +42,7 @@ export const logWorkoutSession = async (req, res, next) => {
       routine_id: routineId,
       workout_date: new Date(),
       duration_seconds,
-      calories_burned, // <-- CAMBIO: Se añade el valor de calorías
+      calories_burned,
       notes
     }, { transaction: t });
 
@@ -124,6 +124,7 @@ export const updateWorkoutLog = async (req, res) => {
   res.status(501).json({ error: 'Funcionalidad de editar no implementada todavía.' });
 };
 
+// --- INICIO DE LA CORRECCIÓN ---
 export const deleteWorkoutLog = async (req, res, next) => {
   const { workoutId } = req.params;
   const { userId } = req.user;
@@ -141,34 +142,50 @@ export const deleteWorkoutLog = async (req, res, next) => {
       return res.status(404).json({ error: 'Registro de entrenamiento no encontrado.' });
     }
 
-    const exercisesInWorkout = workoutLog.WorkoutLogDetails;
+    // Guardamos una copia de los detalles antes de que sean borrados en cascada
+    const exercisesInWorkout = [...workoutLog.WorkoutLogDetails];
 
+    // Borramos el log (y sus detalles/series en cascada)
     await workoutLog.destroy({ transaction: t });
 
-    for (const exercise of exercisesInWorkout) {
+    // Ahora, recalculamos los PRs para los ejercicios afectados
+    for (const deletedDetail of exercisesInWorkout) {
+      const exerciseName = deletedDetail.exercise_name;
+      
+      // Buscamos si el récord actual fue establecido por el detalle que borramos
       const currentPR = await PersonalRecord.findOne({
-        where: { user_id: userId, exercise_name: exercise.exercise_name },
+        where: { 
+          user_id: userId, 
+          exercise_name: exerciseName 
+        },
         transaction: t
       });
 
-      if (currentPR && currentPR.weight_kg == exercise.best_set_weight) {
+      // Si no hay PR, o el PR era más alto que el de este entreno, no hay nada que hacer.
+      // Solo recalculamos si el PR actual podría haber sido el que acabamos de borrar.
+      if (currentPR && currentPR.weight_kg <= deletedDetail.best_set_weight) {
+        
+        // Buscamos el nuevo mejor set en el resto de entrenamientos
         const newBestLogDetail = await WorkoutLogDetail.findOne({
           include: [{
             model: WorkoutLog,
+            as: 'WorkoutLog',
             where: { user_id: userId },
             attributes: []
           }],
-          where: { exercise_name: exercise.exercise_name },
+          where: { exercise_name: exerciseName },
           order: [['best_set_weight', 'DESC']],
           transaction: t
         });
 
         if (newBestLogDetail) {
-          const workoutDate = await WorkoutLog.findByPk(newBestLogDetail.workout_log_id, { attributes: ['workout_date'], transaction: t });
+          // Si encontramos un nuevo mejor, actualizamos el PR
+          const newBestWorkout = await WorkoutLog.findByPk(newBestLogDetail.workout_log_id, { attributes: ['workout_date'], transaction: t });
           currentPR.weight_kg = newBestLogDetail.best_set_weight;
-          currentPR.date = workoutDate.workout_date;
+          currentPR.date = newBestWorkout.workout_date;
           await currentPR.save({ transaction: t });
         } else {
+          // Si no quedan registros para ese ejercicio, borramos el PR
           await currentPR.destroy({ transaction: t });
         }
       }
@@ -182,6 +199,7 @@ export const deleteWorkoutLog = async (req, res, next) => {
     next(error);
   }
 };
+// --- FIN DE LA CORRECCIÓN ---
 
 const workoutController = {
   getWorkoutHistory,

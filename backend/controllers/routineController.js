@@ -204,12 +204,12 @@ export const updateRoutine = async (req, res, next) => {
   }
 };
 
-// --- INICIO DE LA MODIFICACIÓN ---
+// --- INICIO DE LA CORRECCIÓN ---
 // ELIMINAR UNA RUTINA
 export const deleteRoutine = async (req, res, next) => {
   const { id } = req.params;
   const { userId } = req.user;
-  const t = await sequelize.transaction(); // Usar una transacción para asegurar la integridad
+  const t = await sequelize.transaction();
 
   try {
     const routine = await Routine.findOne({
@@ -222,26 +222,60 @@ export const deleteRoutine = async (req, res, next) => {
       return res.status(404).json({ error: 'Rutina no encontrada' });
     }
 
-    // 1. Eliminar todos los logs de entrenamiento asociados a esta rutina
-    await WorkoutLog.destroy({
-      where: {
-        routine_id: id,
-        user_id: userId
-      },
+    // 1. Recolectar todos los detalles de los entrenamientos que se van a borrar
+    const logsToDelete = await WorkoutLog.findAll({
+      where: { routine_id: id, user_id: userId },
+      include: [{ model: WorkoutLogDetail, as: 'WorkoutLogDetails' }],
       transaction: t
     });
+    const detailsToDelete = logsToDelete.flatMap(log => log.WorkoutLogDetails);
+    const affectedExercises = [...new Set(detailsToDelete.map(d => d.exercise_name))];
 
-    // 2. Eliminar la rutina en sí (esto ya elimina en cascada los routine_exercises)
+    // 2. Eliminar la rutina (esto borrará en cascada los logs, detalles y series)
     await routine.destroy({ transaction: t });
 
+    // 3. Recalcular PRs para los ejercicios afectados
+    for (const exerciseName of affectedExercises) {
+      const currentPR = await PersonalRecord.findOne({
+        where: { user_id: userId, exercise_name: exerciseName },
+        transaction: t
+      });
+
+      if (currentPR) {
+        // Buscar el nuevo mejor set en el resto de entrenamientos (los que no hemos borrado)
+        const newBestLogDetail = await WorkoutLogDetail.findOne({
+          include: [{
+            model: WorkoutLog,
+            as: 'WorkoutLog',
+            where: { user_id: userId },
+            attributes: []
+          }],
+          where: { exercise_name: exerciseName },
+          order: [['best_set_weight', 'DESC']],
+          transaction: t
+        });
+
+        if (newBestLogDetail) {
+          // Si encontramos un nuevo mejor, actualizamos el PR
+          const newBestWorkout = await WorkoutLog.findByPk(newBestLogDetail.workout_log_id, { attributes: ['workout_date'], transaction: t });
+          currentPR.weight_kg = newBestLogDetail.best_set_weight;
+          currentPR.date = newBestWorkout.workout_date;
+          await currentPR.save({ transaction: t });
+        } else {
+          // Si no quedan registros para ese ejercicio, borramos el PR
+          await currentPR.destroy({ transaction: t });
+        }
+      }
+    }
+
     await t.commit();
-    res.json({ message: 'Rutina y su historial de entrenamientos eliminados correctamente' });
+    res.json({ message: 'Rutina y su historial eliminados, récords recalculados.' });
   } catch (error) {
     await t.rollback();
     next(error);
   }
 };
-// --- FIN DE LA MODIFICACIÓN ---
+// --- FIN DE LA CORRECCIÓN ---
 
 const routineController = {
   getAllRoutines,

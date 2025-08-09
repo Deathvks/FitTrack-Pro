@@ -25,7 +25,7 @@ export default function App() {
     fetchInitialData,
     handleLogout: performLogout,
     activeWorkout,
-    workoutStartTime, // <-- 1. Obtener el estado del inicio del cronómetro
+    workoutStartTime, // <-- inicio del cronómetro
   } = useAppStore();
 
   const [view, setView] = useState(() => {
@@ -34,9 +34,9 @@ export default function App() {
     }
     return localStorage.getItem('lastView') || 'dashboard';
   });
-  
+
   const mainContentRef = useRef(null);
-  
+
   useEffect(() => {
     if (mainContentRef.current) {
       mainContentRef.current.scrollTop = 0;
@@ -48,7 +48,13 @@ export default function App() {
   }, [view]);
 
   const [isLoginView, setIsLoginView] = useState(true);
+
+  // ---- Tema (claro/oscuro/sistema)
   const [theme, setThemeState] = useState(() => localStorage.getItem('theme') || 'system');
+
+  // ---- NUEVO: Acento de la app (verde, azul, etc.)
+  const [accent, setAccentState] = useState(() => localStorage.getItem('accent') || 'green');
+
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const { isWorkoutPaused, workoutAccumulatedTime } = useAppStore();
   const [timer, setTimer] = useState(0);
@@ -71,10 +77,17 @@ export default function App() {
     setThemeState(newTheme);
   };
 
+  // NUEVO: aplicar clase accent-* al body y persistir
+  const setAccent = (newAccent) => {
+    localStorage.setItem('accent', newAccent);
+    setAccentState(newAccent);
+  };
+
   useEffect(() => {
     fetchInitialData();
   }, [fetchInitialData]);
 
+  // Aplica tema claro/oscuro
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const applyTheme = (themeValue) => {
@@ -92,6 +105,15 @@ export default function App() {
     mediaQuery.addEventListener('change', handleSystemThemeChange);
     return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
   }, [theme]);
+
+  // NUEVO: aplica la clase de acento (accent-green, accent-blue, etc.)
+  useEffect(() => {
+    // elimina cualquier clase accent- previa
+    const toRemove = Array.from(document.body.classList).filter(c => c.startsWith('accent-'));
+    toRemove.forEach(c => document.body.classList.remove(c));
+    // añade la clase actual
+    document.body.classList.add(`accent-${accent}`);
+  }, [accent]);
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -126,7 +148,18 @@ export default function App() {
       case 'progress': return <Progress darkMode={theme !== 'light'} />;
       case 'routines': return <Routines setView={navigate} />;
       case 'workout': return <Workout timer={timer} setView={navigate} />;
-      case 'settings': return <SettingsScreen theme={theme} setTheme={setTheme} setView={navigate} onLogoutClick={handleLogoutClick} />;
+      case 'settings':
+        return (
+          <SettingsScreen
+            theme={theme}
+            setTheme={setTheme}
+            /* NUEVO: pasamos acento y setter al panel de ajustes */
+            accent={accent}
+            setAccent={setAccent}
+            setView={navigate}
+            onLogoutClick={handleLogoutClick}
+          />
+        );
       case 'profileEditor': return <ProfileEditor onCancel={() => navigate('settings')} />;
       case 'accountEditor': return <AccountEditor onCancel={() => navigate('settings')} />;
       case 'adminPanel': return <AdminPanel onCancel={() => navigate('settings')} />;
@@ -187,15 +220,14 @@ export default function App() {
 
       {showLogoutConfirm && (
         <ConfirmationModal
-            message="¿Estás seguro de que quieres cerrar sesión?"
-            onConfirm={confirmLogout}
-            onCancel={() => setShowLogoutConfirm(false)}
-            confirmText="Cerrar Sesión"
+          message="¿Estás seguro de que quieres cerrar sesión?"
+          onConfirm={confirmLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+          confirmText="Cerrar Sesión"
         />
       )}
 
-      {/* --- INICIO DE LA MODIFICACIÓN --- */}
-      {/* 2. Añadir la condición 'workoutStartTime' */}
+      {/* Botón volver al entreno: solo si hay entrenamiento activo con cronómetro iniciado */}
       {activeWorkout && workoutStartTime && view !== 'workout' && (
         <button
           onClick={() => navigate('workout')}
@@ -205,10 +237,9 @@ export default function App() {
           <span>Volver al Entreno</span>
         </button>
       )}
-      {/* --- FIN DE LA MODIFICACIÓN --- */}
 
       <div className="hidden md:block absolute bottom-4 right-4 z-50 bg-bg-secondary/50 text-text-muted text-xs px-2.5 py-1 rounded-full backdrop-blur-sm select-none">
-        v2.0.2
+        v2.1.0
       </div>
     </div>
   );

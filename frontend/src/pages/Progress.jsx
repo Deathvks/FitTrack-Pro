@@ -39,7 +39,7 @@ const DailyDetailView = ({ logs, onClose }) => {
             setLogToDelete(null);
         }
     };
-    
+
     const cancelDelete = () => {
         setShowDeleteConfirm(false);
         setLogToDelete(null);
@@ -80,7 +80,7 @@ const DailyDetailView = ({ logs, onClose }) => {
     return (
         <>
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]">
-                <GlassCard className="relative w-full max-w-lg p-6 flex flex-col gap-4 m-4">
+                <GlassCard className="relative w-full max-w-lg p-6 flex flex-col gap-4 m-4 bg-bg-secondary shadow-2xl">
                     <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary"><X size={20} /></button>
                     <div className="text-center pb-4 border-b border-glass-border">
                         <h3 className="text-xl font-bold">Resumen del Día</h3>
@@ -99,7 +99,7 @@ const DailyDetailView = ({ logs, onClose }) => {
                         {visibleLogs.map((log) => {
                             const exerciseGroups = groupExercises(log.WorkoutLogDetails);
                             const isCardioOnly = !log.WorkoutLogDetails || log.WorkoutLogDetails.length === 0;
-                            
+
                             return (
                                 <div key={log.id} className="bg-bg-secondary rounded-md">
                                     <div className="flex justify-between items-center p-3">
@@ -110,21 +110,21 @@ const DailyDetailView = ({ logs, onClose }) => {
                                     </div>
                                     <div className="px-3 pb-3 space-y-3">
                                         {log.notes && (
-                                            <div className="bg-bg-primary p-3 rounded-md border-l-2 border-accent">
+                                            <div className="bg-[--glass-bg] p-3 rounded-md border-l-2 border-accent">
                                                 <p className="font-semibold text-xs text-accent mb-1">Notas de la sesión</p>
                                                 <p className="text-sm text-text-secondary whitespace-pre-wrap">{log.notes}</p>
                                             </div>
                                         )}
-                                        
+
                                         {/* --- INICIO DE LA MODIFICACIÓN --- */}
                                         {isCardioOnly ? (
                                             <div className="bg-bg-primary rounded-md border border-glass-border p-3 flex justify-around text-center">
                                                 <div>
-                                                    <p className="text-xs text-text-secondary flex items-center gap-1"><Timer size={12}/> Duración</p>
+                                                    <p className="text-xs text-text-secondary flex items-center gap-1"><Timer size={12} /> Duración</p>
                                                     <p className="font-bold">{Math.round(log.duration_seconds / 60)} min</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-text-secondary flex items-center gap-1"><Flame size={12}/> Calorías</p>
+                                                    <p className="text-xs text-text-secondary flex items-center gap-1"><Flame size={12} /> Calorías</p>
                                                     <p className="font-bold">{log.calories_burned} kcal</p>
                                                 </div>
                                             </div>
