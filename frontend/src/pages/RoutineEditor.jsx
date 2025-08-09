@@ -10,7 +10,6 @@ const muscleGroups = [
   'Brazos', 'Core', 'Cardio', 'Antebrazo', 'Trapecio'
 ];
 
-// --- AUTOCOMPLETE ---
 const ExerciseSearch = ({ exercise, exIndex, onFieldChange, onSelect, isOpen, onOpen, onClose }) => {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -101,7 +100,7 @@ const ExerciseSearch = ({ exercise, exIndex, onFieldChange, onSelect, isOpen, on
             <ChevronDown size={16} className={`transition-transform duration-200 ${isFilterOpen ? 'rotate-180' : ''}`} />
           </button>
           {isFilterOpen && (
-            <div className="absolute top-full right-0 mt-2 w-48 bg-bg-secondary border border-glass-border rounded-xl shadow-lg max-h-48 overflow-y-auto z-50 p-2">
+            <div className="absolute top-full left-0 mt-2 w-full bg-bg-secondary border border-glass-border rounded-xl shadow-lg max-h-48 overflow-y-auto z-50 p-2">
               {muscleGroups.map(group => (
                 <button
                   key={group}
@@ -179,9 +178,17 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
   }, [editedRoutine.description]);
 
   const handleFieldChange = (exIndex, field, value) => {
+    let processedValue = value;
+    if ((field === 'name' || field === 'muscle_group') && typeof value === 'string') {
+        processedValue = value.replace(/[0-9]/g, '');
+    } 
+    else if (field === 'reps' && typeof value === 'string') {
+        processedValue = value.replace(/[^0-9-]/g, '');
+    }
+
     setEditedRoutine(prev => {
       const newExercises = [...prev.exercises];
-      newExercises[exIndex] = { ...newExercises[exIndex], [field]: value };
+      newExercises[exIndex] = { ...newExercises[exIndex], [field]: processedValue };
       if (field === 'name') {
         newExercises[exIndex].exercise_list_id = null;
       }
@@ -476,7 +483,9 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
               </div>
 
               {groupIndex < exerciseGroups.length - 1 && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
+                // --- INICIO DE LA CORRECCIÓN ---
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-3">
+                {/* --- FIN DE LA CORRECCIÓN --- */}
                   <button
                     onClick={() =>
                       linkWithPrevious(editedRoutine.exercises.findIndex(e => e.tempId === exerciseGroups[groupIndex + 1][0].tempId))
