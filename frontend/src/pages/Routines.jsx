@@ -104,23 +104,32 @@ const Routines = ({ setView }) => {
     }
   };
 
+  // --- INICIO DE LA CORRECCIÓN ---
   const duplicateRoutine = async (routine) => {
     setIsLoading(true);
     try {
+      // Se crea una copia que el backend pueda entender para una nueva rutina.
+      // Se mapean los 'RoutineExercises' a un nuevo array 'exercises'
+      // y se eliminan los IDs para que se creen como nuevos.
       const copy = {
-        ...routine,
-        id: undefined,
         name: `${routine.name} (Copia)`,
+        description: routine.description,
+        exercises: (routine.RoutineExercises || []).map(
+          // Eliminamos el 'id' y 'routine_id' de cada ejercicio para que la BBDD los cree de nuevo.
+          ({ id, routine_id, ...ex }) => ex
+        )
       };
       await saveRoutine(copy);
       addToast('Rutina duplicada.', 'success');
       await fetchInitialData();
-    } catch {
-      addToast('No se pudo duplicar la rutina.', 'error');
+    } catch (error) {
+      addToast(error.message || 'No se pudo duplicar la rutina.', 'error');
     } finally {
       setIsLoading(false);
     }
   };
+  // --- FIN DE LA CORRECCIÓN ---
+
 
   const filteredSorted = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -163,7 +172,6 @@ const Routines = ({ setView }) => {
         </button>
       </div>
 
-      {/* --- INICIO DE LA CORRECCIÓN --- */}
       <div className="mb-6 max-w-md">
         <label className="text-sm text-text-secondary mb-2 block">Buscar</label>
         <div className="relative">
@@ -176,7 +184,6 @@ const Routines = ({ setView }) => {
           />
         </div>
       </div>
-      {/* --- FIN DE LA CORRECCIÓN --- */}
 
       <div className="flex flex-col gap-4">
         {filteredSorted && filteredSorted.length > 0 ? (

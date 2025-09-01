@@ -179,10 +179,12 @@ export default function App() {
       <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-accent rounded-full opacity-20 filter blur-3xl -z-10 animate-roam-blob"></div>
 
       <nav className="hidden md:flex flex-col gap-10 p-8 w-64 h-full border-r border-[--glass-border] bg-bg-primary">
-        <button onClick={() => navigate('dashboard')} className="flex items-center gap-4 text-accent transition-transform hover:scale-105">
-          <Dumbbell size={32} />
-          <h1 className="text-xl font-bold text-text-primary whitespace-nowrap">FitTrack Pro</h1>
+        {/* --- INICIO DE LA CORRECCIÓN --- */}
+        <button onClick={() => navigate('dashboard')} className="flex items-center justify-center gap-3 text-accent transition-transform hover:scale-105">
+          <Dumbbell className="h-7 w-7 flex-shrink-0" />
+          <h1 className="text-xl font-bold text-text-primary whitespace-nowrap">Pro Fitness Glass</h1>
         </button>
+        {/* --- FIN DE LA CORRECCIÓN --- */}
         <div className="flex flex-col gap-4">
           {navItems.map(item => (
             <button

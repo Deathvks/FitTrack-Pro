@@ -26,13 +26,15 @@ const PORT = process.env.PORT || 3001;
 // Middlewares
 app.use(helmet());
 
-console.log(`[CORS] Configurando CORS para el origen explícito: ${process.env.FRONTEND_URL}`);
-
+// --- INICIO DE LA CORRECCIÓN ---
+// Se ha cambiado 'process.env.FRONTEND_URL' por 'process.env.CORS_ORIGIN'
+// para que coincida con el nombre de la variable en tu fichero .env
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
 };
 app.use(cors(corsOptions));
+// --- FIN DE LA CORRECCIÓN ---
 
 app.use(express.json());
 app.use(cookieParser());

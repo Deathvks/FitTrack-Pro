@@ -33,14 +33,7 @@ const LoginScreen = ({ showRegister }) => {
         setIsLoading(true);
 
         try {
-            // --- INICIO DE LA CORRECCIÓN ---
-            // Ahora solo llamamos a 'handleLogin'. Esta función se encarga de todo:
-            // 1. Llama a la API.
-            // 2. Guarda el token.
-            // 3. Carga los datos del usuario.
             await handleLogin({ email, password });
-            // Ya no necesitamos 'fetchInitialData()' aquí.
-            // --- FIN DE LA CORRECCIÓN ---
         } catch (err) {
             const errorMessage = err.message || 'Error al iniciar sesión.';
             addToast(errorMessage, 'error');
@@ -53,7 +46,7 @@ const LoginScreen = ({ showRegister }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-primary p-4 animate-[fade-in_0.5s_ease-out]">
             <div className="w-full max-w-sm text-center">
                 <Dumbbell size={48} className="mx-auto text-accent mb-4" />
-                <h1 className="text-4xl font-extrabold">FitTrack Pro</h1>
+                <h1 className="text-4xl font-extrabold">Pro Fitness Glass</h1>
                 <p className="text-text-secondary mb-8">Tu compañero de fitness definitivo.</p>
 
                 <GlassCard className="p-8">
