@@ -1,0 +1,16 @@
+{
+    # Zeabur asigna el puerto a través de esta variable de entorno.
+    http_port {$PORT}
+}
+
+# Configura el servidor para que escuche en el puerto asignado.
+:{$PORT} {
+    # Define la carpeta raíz donde están los archivos de la web.
+    root * /usr/share/caddy
+
+    # Activa el servidor de archivos estáticos.
+    file_server
+
+    # Redirige todas las rutas a index.html para que funcione el enrutador de React.
+    try_files {path} /index.html
+}
