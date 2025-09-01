@@ -1,35 +1,36 @@
 {
-  "name": "backend",
+  "name": "pro-fitness-glass",
+  "private": true,
   "version": "2.1.0",
   "type": "module",
-  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node start.js",
-    "db:migrate": "sequelize-cli db:migrate --env production",
-    "db:migrate:dev": "sequelize-cli db:migrate",
-    "db:seed": "sequelize-cli db:seed:all --env production",
-    "db:seed:dev": "sequelize-cli db:seed:all",
-    "db:seed:undo": "sequelize-cli db:seed:undo:all --env production"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "tailwind:init": "node node_modules/tailwindcss/lib/cli.js init -p",
+    "start": "serve -s dist"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.0",
-    "express": "^5.1.0",
-    "express-rate-limit": "^8.0.1",
-    "express-validator": "^7.2.1",
-    "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.14.2",
-    "nodemon": "^3.1.10",
-    "sequelize": "^6.37.7",
-    "sequelize-cli": "^6.6.3"
+    "lucide-react": "^0.525.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "recharts": "^3.1.0",
+    "serve": "^14.2.3",
+    "zustand": "^4.5.7"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "vite": "^7.0.4"
+  }
 }
