@@ -7,12 +7,21 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 let sequelize;
 
+// --- INICIO DE LA MODIFICACIÓN ---
+const commonOptions = {
+  dialect: 'mysql',
+  // Forza a que todas las fechas se manejen en UTC.
+  // Esto previene los problemas de desfase horario entre Node.js y MySQL.
+  timezone: '+00:00', 
+};
+// --- FIN DE LA MODIFICACIÓN ---
+
 if (isProduction) {
   // Construye la URL de conexión para producción usando las variables de Zeabur
   const dbUrl = `mysql://${process.env.MYSQL_USERNAME}:${process.env.MYSQL_PASSWORD}@${process.env.MYSQL_HOST}:${process.env.MYSQL_PORT}/${process.env.MYSQL_DATABASE}`;
 
   sequelize = new Sequelize(dbUrl, {
-    dialect: 'mysql',
+    ...commonOptions, // Aplicamos las opciones comunes
     dialectOptions: {
       ssl: {
         require: true,
@@ -27,8 +36,8 @@ if (isProduction) {
     process.env.DB_USER,
     process.env.DB_PASSWORD,
     {
+      ...commonOptions, // Aplicamos las opciones comunes
       host: process.env.DB_HOST,
-      dialect: 'mysql'
     }
   );
 }

@@ -4,6 +4,11 @@ import * as userService from '../services/userService';
 import * as routineService from '../services/routineService';
 import * as workoutService from '../services/workoutService';
 import * as bodyweightService from '../services/bodyweightService';
+import * as nutritionService from '../services/nutritionService';
+import * as favoriteMealService from '../services/favoriteMealService';
+// --- INICIO DE LA MODIFICACIÓN ---
+import * as templateRoutineService from '../services/templateRoutineService'; // Se importa el nuevo servicio
+// --- FIN DE LA MODIFICACIÓN ---
 
 
 const getFullStateFromStorage = () => {
@@ -63,6 +68,8 @@ const clearRestTimerInStorage = () => {
     localStorage.removeItem('restTimerInitialDuration');
 };
 
+const getTodayDateString = () => new Date().toISOString().split('T')[0];
+
 const useAppStore = create((set, get) => ({
   // --- ESTADO ---
   isAuthenticated: !!localStorage.getItem('fittrack_token'),
@@ -73,6 +80,14 @@ const useAppStore = create((set, get) => ({
   bodyWeightLog: [],
   isLoading: true,
   prNotification: null,
+  nutritionLog: [],
+  waterLog: { quantity_ml: 0 },
+  selectedDate: getTodayDateString(),
+  nutritionSummary: { nutrition: [], water: [] },
+  favoriteMeals: [],
+  // --- INICIO DE LA MODIFICACIÓN ---
+  templateRoutines: {}, // Nuevo estado para las rutinas predefinidas
+  // --- FIN DE LA MODIFICACIÓN ---
   ...getFullStateFromStorage(),
 
   // --- ACCIONES ---
@@ -101,22 +116,81 @@ const useAppStore = create((set, get) => ({
       set({ userProfile: profileData, isAuthenticated: true });
 
       if (profileData.goal) {
-        const [routines, workouts, bodyweight] = await Promise.all([
+        const today = get().selectedDate;
+        // --- INICIO DE LA MODIFICACIÓN ---
+        const [routines, workouts, bodyweight, nutrition, favoriteMeals, templateRoutines] = await Promise.all([
           routineService.getRoutines(),
           workoutService.getWorkouts(),
-          bodyweightService.getHistory()
+          bodyweightService.getHistory(),
+          nutritionService.getNutritionLogsByDate(today),
+          favoriteMealService.getFavoriteMeals(),
+          templateRoutineService.getTemplateRoutines(), // Se cargan las rutinas predefinidas
         ]);
         set({
           routines,
           workoutLog: workouts,
           bodyWeightLog: bodyweight,
+          nutritionLog: nutrition.nutrition,
+          waterLog: nutrition.water,
+          favoriteMeals,
+          templateRoutines, // Se guardan en el estado
         });
+        // --- FIN DE LA MODIFICACIÓN ---
       }
     } catch (error) {
       console.error("Error de autenticación:", error);
       get().handleLogout();
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  fetchDataForDate: async (date) => {
+    set({ selectedDate: date, isLoading: true });
+    try {
+        const nutrition = await nutritionService.getNutritionLogsByDate(date);
+        set({
+            nutritionLog: nutrition.nutrition,
+            waterLog: nutrition.water,
+        });
+    } catch (error) {
+        console.error("Error al cargar datos de nutrición:", error);
+    } finally {
+        set({ isLoading: false });
+    }
+  },
+
+  fetchNutritionSummary: async (month, year) => {
+    try {
+        const summaryData = await nutritionService.getNutritionSummary(month, year);
+        set({
+            nutritionSummary: {
+                nutrition: summaryData.nutritionSummary,
+                water: summaryData.waterSummary,
+            },
+        });
+    } catch (error) {
+        console.error("Error al cargar el resumen de nutrición:", error);
+    }
+  },
+
+  addFavoriteMeal: async (mealData) => {
+    try {
+      const newMeal = await favoriteMealService.createFavoriteMeal(mealData);
+      set(state => ({ favoriteMeals: [...state.favoriteMeals, newMeal].sort((a, b) => a.name.localeCompare(b.name)) }));
+      return { success: true, message: 'Comida guardada en favoritos.' };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
+  },
+
+  deleteFavoriteMeal: async (mealId) => {
+    try {
+      await favoriteMealService.deleteFavoriteMeal(mealId);
+      set(state => ({ favoriteMeals: state.favoriteMeals.filter(meal => meal.id !== mealId) }));
+      return { success: true, message: 'Comida eliminada de favoritos.' };
+    } catch (error) {
+      return { success: false, message: error.message };
     }
   },
 
@@ -132,6 +206,12 @@ const useAppStore = create((set, get) => ({
       routines: [],
       workoutLog: [],
       bodyWeightLog: [],
+      nutritionLog: [],
+      waterLog: { quantity_ml: 0 },
+      selectedDate: getTodayDateString(),
+      nutritionSummary: { nutrition: [], water: [] },
+      favoriteMeals: [],
+      templateRoutines: {}, // Limpiar al cerrar sesión
       isLoading: false,
       activeWorkout: null,
       workoutStartTime: null,
@@ -144,9 +224,12 @@ const useAppStore = create((set, get) => ({
   },
 
   startWorkout: (routine) => {
-    const exercises = routine.RoutineExercises || [];
-    const sessionTemplate = exercises.map(ex => ({
+    const exercises = routine.RoutineExercises || routine.TemplateRoutineExercises || [];
+    const sessionTemplate = exercises.map((ex, index) => ({
         ...ex,
+        // Asegurar que los ejercicios de plantilla tengan valores por defecto correctos
+        superset_group_id: ex.superset_group_id || null,
+        exercise_order: ex.exercise_order !== undefined ? ex.exercise_order : 0,
         setsDone: Array.from({ length: ex.sets }, (_, i) => ({
             set_number: i + 1,
             reps: '',
@@ -157,7 +240,7 @@ const useAppStore = create((set, get) => ({
 
     const newState = {
       activeWorkout: {
-        routineId: routine.id,
+        routineId: routine.id || null,
         routineName: routine.name,
         exercises: sessionTemplate,
       },
@@ -274,7 +357,6 @@ const useAppStore = create((set, get) => ({
     setWorkoutInStorage({ ...get(), ...newState });
   },
 
-  // --- INICIO DE LA MODIFICACIÓN ---
   replaceExercise: (exIndex, newExercise) => {
     const session = get().activeWorkout;
     if (!session) return;
@@ -282,9 +364,8 @@ const useAppStore = create((set, get) => ({
     const newExercises = [...session.exercises];
     const oldExercise = newExercises[exIndex];
 
-    // Sustituye el ejercicio manteniendo las series que ya estaban
     newExercises[exIndex] = {
-      ...oldExercise, // Mantiene superset_id, order, etc.
+      ...oldExercise,
       exercise_list_id: newExercise.id,
       name: newExercise.name,
       muscle_group: newExercise.muscle_group,
@@ -294,7 +375,6 @@ const useAppStore = create((set, get) => ({
     set(newState);
     setWorkoutInStorage({ ...get(), ...newState });
   },
-  // --- FIN DE LA MODIFICACIÓN ---
   
   openRestModal: () => {
     set({ isResting: true });
@@ -315,18 +395,44 @@ const useAppStore = create((set, get) => ({
     set((state) => {
       if (!state.restTimerEndTime) return {};
 
-      const newEndTime = state.restTimerEndTime + secondsToAdd * 1000;
-      const newInitialDuration = state.restTimerInitialDuration + secondsToAdd;
-
-      if (newEndTime < Date.now() || newInitialDuration <= 0) {
-        const finalState = { restTimerEndTime: Date.now() };
-        setRestTimerInStorage({ ...state, ...finalState});
-        return finalState;
+      const currentTime = Date.now();
+      const currentTimeLeft = Math.max(0, Math.round((state.restTimerEndTime - currentTime) / 1000));
+      
+      // Si el cronómetro está en 0 y se intenta restar tiempo, ignorar
+      if (currentTimeLeft === 0 && secondsToAdd < 0) {
+        return {}; // No hacer nada
       }
+      
+      // Si el cronómetro está en 0 y se agrega tiempo positivo, reiniciar completamente
+      if (currentTimeLeft === 0 && secondsToAdd > 0) {
+        const newEndTime = currentTime + (secondsToAdd * 1000);
+        const newState = {
+          restTimerEndTime: newEndTime,
+          restTimerInitialDuration: secondsToAdd,
+        };
+        setRestTimerInStorage({ ...state, ...newState });
+        return newState;
+      }
+      
+      // Para cronómetro en funcionamiento
+      const newTimeLeft = currentTimeLeft + secondsToAdd;
+      
+      // Si el nuevo tiempo sería negativo o cero, detener en 0
+      if (newTimeLeft <= 0) {
+        const stopState = { 
+          restTimerEndTime: currentTime // Detener exactamente ahora
+        };
+        setRestTimerInStorage({ ...state, ...stopState });
+        return stopState;
+      }
+      
+      // Caso normal: ajustar el tiempo
+      const newEndTime = currentTime + (newTimeLeft * 1000);
+      const newInitialDuration = state.restTimerInitialDuration + secondsToAdd;
       
       const newState = {
         restTimerEndTime: newEndTime,
-        restTimerInitialDuration: newInitialDuration,
+        restTimerInitialDuration: Math.max(1, newInitialDuration),
       };
       setRestTimerInStorage({ ...state, ...newState });
       return newState;

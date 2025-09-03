@@ -42,6 +42,10 @@ const RegisterScreen = ({ showLogin }) => {
             const errorMessage = err.message || 'Error al registrar el usuario.';
             setErrors({ api: errorMessage });
             addToast(errorMessage, 'error');
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Limpiamos la contraseña en caso de error.
+            setPassword('');
+            // --- FIN DE LA MODIFICACIÓN ---
             setIsLoading(false);
         }
     };

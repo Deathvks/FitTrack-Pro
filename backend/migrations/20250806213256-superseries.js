@@ -1,7 +1,9 @@
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
+// --- INICIO DE LA CORRECCIÓN ---
 export default {
+// --- FIN DE LA CORRECCIÓN ---
   async up (queryInterface, Sequelize) {
     // Columna para agrupar ejercicios en una superserie
     await queryInterface.addColumn('routine_exercises', 'superset_group_id', {

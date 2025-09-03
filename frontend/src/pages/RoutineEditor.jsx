@@ -182,9 +182,10 @@ const RoutineEditor = ({ routine, onSave, onCancel, isLoading }) => {
     if ((field === 'name' || field === 'muscle_group') && typeof value === 'string') {
         processedValue = value.replace(/[0-9]/g, '');
     } 
-    else if (field === 'reps' && typeof value === 'string') {
-        processedValue = value.replace(/[^0-9-]/g, '');
-    }
+    // Comentamos o eliminamos esta validación restrictiva para 'reps'
+    // else if (field === 'reps' && typeof value === 'string') {
+    //     processedValue = value.replace(/[^0-9-]/g, '');
+    // }
 
     setEditedRoutine(prev => {
       const newExercises = [...prev.exercises];

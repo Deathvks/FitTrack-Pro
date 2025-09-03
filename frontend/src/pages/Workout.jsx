@@ -161,7 +161,24 @@ const Workout = ({ timer, setView }) => {
     setIsSaving(false);
   };
   
-  const baseInputClasses = "w-full text-center bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition";
+  // Determinar si el cronómetro ha sido iniciado alguna vez
+  const hasWorkoutStarted = workoutStartTime !== null;
+  
+  // Función para manejar clicks en inputs deshabilitados
+  const handleDisabledInputClick = () => {
+    addToast('Debes iniciar el cronómetro antes de registrar datos.', 'warning');
+  };
+  
+  // Función para manejar clicks en botones deshabilitados
+  const handleDisabledButtonClick = () => {
+    addToast('Debes iniciar el cronómetro antes de usar esta función.', 'warning');
+  };
+
+  // Definir las clases CSS para los inputs
+  const baseInputClasses = `w-full text-center bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition ${
+    !hasWorkoutStarted ? 'opacity-50 cursor-not-allowed' : ''
+  }`;
+
   const isSimpleWorkout = !activeWorkout.exercises || activeWorkout.exercises.length === 0;
 
   return (
@@ -186,6 +203,11 @@ const Workout = ({ timer, setView }) => {
                 </button>
             </div>
         </div>
+        {!hasWorkoutStarted && (
+          <div className="mt-4 p-3 bg-yellow/10 border border-yellow/20 rounded-md text-center">
+            <p className="text-yellow font-medium">⏱️ Inicia el cronómetro para comenzar a registrar datos</p>
+          </div>
+        )}
       </GlassCard>
 
       {!isSimpleWorkout && (
@@ -198,62 +220,95 @@ const Workout = ({ timer, setView }) => {
                     <span>Superserie</span>
                 </div>
                 )}
-                <div className="flex flex-col gap-4 p-2">
-                {group.map(ex => {
-                    const exIndex = activeWorkout.exercises.findIndex(e => e === ex);
+                <div className="flex flex-col gap-4">
+                {group.map((exercise, exIndex) => {
+                    const actualExIndex = activeWorkout.exercises.findIndex(ex => ex === exercise);
                     return (
-                    <div key={ex.id || exIndex} className="p-4 bg-bg-secondary rounded-md border border-glass-border">
-                        <div className="flex justify-between items-center pb-4 border-b border-glass-border mb-4">
-                            <div>
-                                <h2 className="text-xl font-bold">{ex.name}</h2>
-                                <p className="text-sm text-text-muted">Objetivo: {ex.sets} x {ex.reps} reps</p>
-                            </div>
-                            <button 
-                                onClick={() => setExerciseToReplace(exIndex)}
-                                className="p-2 rounded-full text-text-muted hover:bg-white/10 hover:text-accent transition"
-                                title="Sustituir ejercicio"
+                    <div key={actualExIndex} className="p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">{exercise.name}</h3>
+                            <button
+                                onClick={() => setExerciseToReplace(actualExIndex)}
+                                className={`p-2 rounded-md transition ${
+                                  hasWorkoutStarted 
+                                    ? 'bg-bg-primary border border-glass-border text-text-secondary hover:text-accent hover:border-accent/50' 
+                                    : 'bg-bg-primary border border-glass-border text-text-muted opacity-50 cursor-not-allowed'
+                                }`}
+                                title={hasWorkoutStarted ? "Reemplazar ejercicio" : "Inicia el cronómetro para reemplazar ejercicios"}
+                                disabled={!hasWorkoutStarted}
                             >
-                                <Repeat size={18} />
+                                <Repeat size={16} />
                             </button>
                         </div>
-                        <div className="grid grid-cols-[auto_1fr_1fr_auto_auto] gap-4 text-center text-xs font-bold text-text-secondary mb-2 px-2">
-                            <span>SERIE</span>
-                            <span>PESO (kg)</span>
-                            <span>REPS</span>
-                            <span className="sr-only">Dropset</span>
-                            <span className="sr-only">Descanso</span>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            {ex.setsDone.map((set, setIndex) => (
-                                <div key={setIndex} className={`grid grid-cols-[auto_1fr_1fr_auto_auto] gap-2 sm:gap-4 items-center ${set.is_dropset ? 'pl-4' : ''}`}>
-                                    <span className={`flex items-center justify-center font-bold p-3 rounded-md border border-glass-border h-full ${set.is_dropset ? 'bg-accent/10 text-accent' : 'bg-bg-primary'}`}>
+                        <div className="grid grid-cols-[auto_1fr_1fr_auto_auto] gap-2 items-center">
+                            <div className="text-center font-semibold text-text-secondary text-sm">Serie</div>
+                            <div className="text-center font-semibold text-text-secondary text-sm">Peso (kg)</div>
+                            <div className="text-center font-semibold text-text-secondary text-sm">Reps</div>
+                            <div className="text-center font-semibold text-text-secondary text-sm">Dropset</div>
+                            <div className="text-center font-semibold text-text-secondary text-sm">Descanso</div>
+                            {exercise.setsDone.map((set, setIndex) => (
+                                <div key={setIndex} className="contents">
+                                    <span className="text-center font-semibold text-text-secondary bg-bg-primary border border-glass-border rounded-md px-3 py-3">
                                         {set.is_dropset ? 'DS' : set.set_number}
                                     </span>
-                                    <input type="number" placeholder="0" value={set.weight_kg} onChange={(e) => updateActiveWorkoutSet(exIndex, setIndex, 'weight_kg', e.target.value)} className={baseInputClasses} />
-                                    <input type="number" placeholder="0" value={set.reps} onChange={(e) => updateActiveWorkoutSet(exIndex, setIndex, 'reps', e.target.value)} className={baseInputClasses} />
+                                    <input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      value={set.weight_kg} 
+                                      onChange={hasWorkoutStarted ? (e) => updateActiveWorkoutSet(actualExIndex, setIndex, 'weight_kg', e.target.value) : undefined}
+                                      onClick={!hasWorkoutStarted ? handleDisabledInputClick : undefined}
+                                      className={baseInputClasses}
+                                      disabled={!hasWorkoutStarted}
+                                      readOnly={!hasWorkoutStarted}
+                                    />
+                                    <input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      value={set.reps} 
+                                      onChange={hasWorkoutStarted ? (e) => updateActiveWorkoutSet(actualExIndex, setIndex, 'reps', e.target.value) : undefined}
+                                      onClick={!hasWorkoutStarted ? handleDisabledInputClick : undefined}
+                                      className={baseInputClasses}
+                                      disabled={!hasWorkoutStarted}
+                                      readOnly={!hasWorkoutStarted}
+                                    />
                                     
                                     {set.is_dropset ? (
                                         <button
-                                            onClick={() => removeDropset(exIndex, setIndex)}
-                                            className="p-3 rounded-md bg-bg-primary border border-glass-border text-text-muted hover:bg-red/20 hover:text-red transition h-full flex items-center justify-center"
-                                            title="Eliminar Dropset"
+                                            onClick={hasWorkoutStarted ? () => removeDropset(actualExIndex, setIndex) : handleDisabledButtonClick}
+                                            className={`p-3 rounded-md border transition h-full flex items-center justify-center ${
+                                              hasWorkoutStarted 
+                                                ? 'bg-bg-primary border-glass-border text-text-muted hover:bg-red/20 hover:text-red' 
+                                                : 'bg-bg-primary border-glass-border text-text-muted opacity-50 cursor-not-allowed'
+                                            }`}
+                                            title={hasWorkoutStarted ? "Eliminar Dropset" : "Inicia el cronómetro para eliminar dropsets"}
+                                            disabled={!hasWorkoutStarted}
                                         >
                                             <X size={20} />
                                         </button>
                                     ) : (
                                         <button
-                                        onClick={() => addDropset(exIndex, setIndex)}
-                                        className="p-3 rounded-md bg-bg-primary border border-glass-border text-text-secondary hover:text-accent hover:border-accent/50 transition h-full flex items-center justify-center"
-                                        title="Añadir Dropset"
+                                        onClick={hasWorkoutStarted ? () => addDropset(actualExIndex, setIndex) : handleDisabledButtonClick}
+                                        className={`p-3 rounded-md border transition h-full flex items-center justify-center ${
+                                          hasWorkoutStarted 
+                                            ? 'bg-bg-primary border-glass-border text-text-secondary hover:text-accent hover:border-accent/50' 
+                                            : 'bg-bg-primary border-glass-border text-text-muted opacity-50 cursor-not-allowed'
+                                        }`}
+                                        title={hasWorkoutStarted ? "Añadir Dropset" : "Inicia el cronómetro para añadir dropsets"}
+                                        disabled={!hasWorkoutStarted}
                                         >
                                             <CornerDownRight size={20} />
                                         </button>
                                     )}
 
                                     <button 
-                                    onClick={openRestModal}
-                                    className="p-3 rounded-md bg-bg-primary border border-glass-border text-text-secondary hover:text-accent hover:border-accent/50 transition h-full flex items-center justify-center"
-                                    title="Iniciar descanso"
+                                    onClick={hasWorkoutStarted ? openRestModal : handleDisabledButtonClick}
+                                    className={`p-3 rounded-md border transition h-full flex items-center justify-center ${
+                                      hasWorkoutStarted 
+                                        ? 'bg-bg-primary border-glass-border text-text-secondary hover:text-accent hover:border-accent/50' 
+                                        : 'bg-bg-primary border-glass-border text-text-muted opacity-50 cursor-not-allowed'
+                                    }`}
+                                    title={hasWorkoutStarted ? "Iniciar descanso" : "Inicia el cronómetro para usar el temporizador de descanso"}
+                                    disabled={!hasWorkoutStarted}
                                     >
                                         <Clock size={20} />
                                     </button>
@@ -277,10 +332,14 @@ const Workout = ({ timer, setView }) => {
         <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="¿Cómo te sentiste? ¿Alguna observación?..."
-            className="w-full bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition resize-none"
-            rows="3"
-        ></textarea>
+            placeholder={hasWorkoutStarted ? "¿Cómo te sentiste? ¿Alguna observación?..." : "Inicia el cronómetro para añadir notas..."}
+            className={`w-full bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition resize-none ${
+              !hasWorkoutStarted ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            rows={4}
+            disabled={!hasWorkoutStarted}
+            readOnly={!hasWorkoutStarted}
+        />
       </GlassCard>
 
       {isResting && <RestTimerModal />}

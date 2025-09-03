@@ -1,7 +1,9 @@
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
+// --- INICIO DE LA CORRECCIÓN ---
 export default {
+// --- FIN DE LA CORRECCIÓN ---
   async up (queryInterface, Sequelize) {
     /**
      * Añade la columna 'superset_group_id' a la tabla 'workout_log_details'.

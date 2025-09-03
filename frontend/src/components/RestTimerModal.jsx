@@ -34,6 +34,12 @@ const RestTimerModal = () => {
       const remaining = Math.round((restTimerEndTime - Date.now()) / 1000);
       const newTimeLeft = Math.max(0, remaining);
       setTimeLeft(newTimeLeft);
+      
+      // Si llegó a 0, detener el timer automáticamente
+      if (remaining <= 0 && restTimerEndTime) {
+        // Opcional: puedes agregar una notificación aquí
+        // addToast('¡Tiempo de descanso terminado!', 'info');
+      }
     };
 
     updateTimer();
@@ -188,11 +194,22 @@ const RestTimerModal = () => {
               </div>
             </div>
             <div className="flex justify-center items-center gap-4 mt-6">
-                <button onClick={() => addRestTime(-10)} className="px-5 py-3 flex items-center justify-center gap-2 rounded-full bg-bg-secondary border border-glass-border hover:border-accent transition">
+                <button 
+                  onClick={() => addRestTime(-10)} 
+                  disabled={timeLeft === 0}
+                  className={`px-5 py-3 flex items-center justify-center gap-2 rounded-full border transition ${
+                    timeLeft === 0 
+                      ? 'bg-gray-600 border-gray-500 text-gray-400 cursor-not-allowed opacity-50' 
+                      : 'bg-bg-secondary border-glass-border hover:border-accent'
+                  }`}
+                >
                     <Minus size={18} />
                     <span className="font-semibold text-sm">-10 seg</span>
                 </button>
-                <button onClick={() => addRestTime(10)} className="px-5 py-3 flex items-center justify-center gap-2 rounded-full bg-bg-secondary border border-glass-border hover:border-accent transition">
+                <button 
+                  onClick={() => addRestTime(10)} 
+                  className="px-5 py-3 flex items-center justify-center gap-2 rounded-full bg-bg-secondary border border-glass-border hover:border-accent transition"
+                >
                     <Plus size={18} />
                     <span className="font-semibold text-sm">+10 seg</span>
                 </button>

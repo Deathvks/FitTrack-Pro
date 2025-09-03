@@ -162,7 +162,7 @@ export default function SettingsScreen({
           </button>
 
           <div className="md:hidden text-center text-xs text-text-muted mt-4">
-            v2.1.0
+            v2.5.0
           </div>
         </aside>
       </div>

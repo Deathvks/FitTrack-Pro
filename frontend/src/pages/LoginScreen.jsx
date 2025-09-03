@@ -38,6 +38,10 @@ const LoginScreen = ({ showRegister }) => {
             const errorMessage = err.message || 'Error al iniciar sesión.';
             addToast(errorMessage, 'error');
             setErrors({ api: errorMessage });
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Limpiamos el campo de contraseña en caso de error para que el usuario pueda reintentar.
+            setPassword('');
+            // --- FIN DE LA MODIFICACIÓN ---
             setIsLoading(false);
         }
     };

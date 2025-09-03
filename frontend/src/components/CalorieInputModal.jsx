@@ -6,10 +6,16 @@ import Spinner from './Spinner';
 const CalorieInputModal = ({ estimatedCalories, onComplete, onCancel, isSaving }) => {
   const [selection, setSelection] = useState(null);
   const [customCalories, setCustomCalories] = useState('');
+  
+  // --- INICIO DE LA MODIFICACIÓN ---
+  const [error, setError] = useState(''); // Estado para el mensaje de error
 
   const handleCustomChange = (e) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
     setCustomCalories(value);
+    if (error) {
+      setError(''); // Limpia el error al empezar a escribir de nuevo
+    }
   };
 
   const handleSubmit = () => {
@@ -18,12 +24,14 @@ const CalorieInputModal = ({ estimatedCalories, onComplete, onCancel, isSaving }
       if (!isNaN(calValue) && calValue > 0) {
         onComplete(calValue);
       } else {
-        alert('Por favor, introduce un valor de calorías válido.');
+        // En lugar de una alerta, establecemos el mensaje de error
+        setError('Por favor, introduce un valor de calorías válido.');
       }
     } else if (selection === 'estimated') {
       onComplete(estimatedCalories);
     }
   };
+  // --- FIN DE LA MODIFICACIÓN ---
 
   const baseButtonClasses = "w-full text-left p-4 rounded-md border-2 transition-all duration-200 flex items-start gap-4";
   const inactiveButtonClasses = "border-glass-border hover:border-accent/50";
@@ -48,7 +56,6 @@ const CalorieInputModal = ({ estimatedCalories, onComplete, onCancel, isSaving }
         </div>
 
         <div className="flex flex-col gap-3">
-          {/* Opción 1: Introducir calorías manualmente */}
           <button 
             onClick={() => setSelection('custom')}
             className={`${baseButtonClasses} ${selection === 'custom' ? activeButtonClasses : inactiveButtonClasses}`}
@@ -67,13 +74,16 @@ const CalorieInputModal = ({ estimatedCalories, onComplete, onCancel, isSaving }
                 placeholder="Ej: 350"
                 value={customCalories}
                 onChange={handleCustomChange}
-                className="w-full bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition"
+                className={`w-full bg-bg-secondary border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition ${error ? 'border-red' : 'border-glass-border'}`}
                 autoFocus
               />
+              {/* --- INICIO DE LA MODIFICACIÓN --- */}
+              {/* Se muestra el mensaje de error aquí */}
+              {error && <p className="text-red text-sm mt-1">{error}</p>}
+              {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
           )}
 
-          {/* Opción 2: Usar la estimación de la app */}
           <button 
             onClick={() => setSelection('estimated')}
             className={`${baseButtonClasses} ${selection === 'estimated' ? activeButtonClasses : inactiveButtonClasses}`}

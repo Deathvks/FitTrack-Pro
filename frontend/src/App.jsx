@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Home, Dumbbell, BarChart2, Settings, LogOut, Zap } from 'lucide-react';
+// --- INICIO DE LA MODIFICACIÓN ---
+import { Home, Dumbbell, BarChart2, Settings, LogOut, Zap, Utensils } from 'lucide-react';
+// --- FIN DE LA MODIFICACIÓN ---
 import useAppStore from './store/useAppStore';
 
 import Dashboard from './pages/Dashboard';
 import Progress from './pages/Progress';
 import Routines from './pages/Routines';
 import Workout from './pages/Workout';
+// --- INICIO DE LA MODIFICACIÓN ---
+import Nutrition from './pages/Nutrition'; // Importamos la nueva página que crearemos
+// --- FIN DE LA MODIFICACIÓN ---
 import SettingsScreen from './pages/SettingsScreen';
 import LoginScreen from './pages/LoginScreen';
 import RegisterScreen from './pages/RegisterScreen';
@@ -25,7 +30,7 @@ export default function App() {
     fetchInitialData,
     handleLogout: performLogout,
     activeWorkout,
-    workoutStartTime, // <-- inicio del cronómetro
+    workoutStartTime,
   } = useAppStore();
 
   const [view, setView] = useState(() => {
@@ -49,10 +54,7 @@ export default function App() {
 
   const [isLoginView, setIsLoginView] = useState(true);
 
-  // ---- Tema (claro/oscuro/sistema)
   const [theme, setThemeState] = useState(() => localStorage.getItem('theme') || 'system');
-
-  // ---- NUEVO: Acento de la app (verde, azul, etc.)
   const [accent, setAccentState] = useState(() => localStorage.getItem('accent') || 'green');
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -77,7 +79,6 @@ export default function App() {
     setThemeState(newTheme);
   };
 
-  // NUEVO: aplicar clase accent-* al body y persistir
   const setAccent = (newAccent) => {
     localStorage.setItem('accent', newAccent);
     setAccentState(newAccent);
@@ -87,7 +88,6 @@ export default function App() {
     fetchInitialData();
   }, [fetchInitialData]);
 
-  // Aplica tema claro/oscuro
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const applyTheme = (themeValue) => {
@@ -106,12 +106,9 @@ export default function App() {
     return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
   }, [theme]);
 
-  // NUEVO: aplica la clase de acento (accent-green, accent-blue, etc.)
   useEffect(() => {
-    // elimina cualquier clase accent- previa
     const toRemove = Array.from(document.body.classList).filter(c => c.startsWith('accent-'));
     toRemove.forEach(c => document.body.classList.remove(c));
-    // añade la clase actual
     document.body.classList.add(`accent-${accent}`);
   }, [accent]);
 
@@ -148,12 +145,14 @@ export default function App() {
       case 'progress': return <Progress darkMode={theme !== 'light'} />;
       case 'routines': return <Routines setView={navigate} />;
       case 'workout': return <Workout timer={timer} setView={navigate} />;
+      // --- INICIO DE LA MODIFICACIÓN ---
+      case 'nutrition': return <Nutrition setView={navigate} />;
+      // --- FIN DE LA MODIFICACIÓN ---
       case 'settings':
         return (
           <SettingsScreen
             theme={theme}
             setTheme={setTheme}
-            /* NUEVO: pasamos acento y setter al panel de ajustes */
             accent={accent}
             setAccent={setAccent}
             setView={navigate}
@@ -167,24 +166,25 @@ export default function App() {
     }
   };
 
+  // --- INICIO DE LA MODIFICACIÓN ---
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <Home size={24} /> },
+    { id: 'nutrition', label: 'Nutrición', icon: <Utensils size={24} /> },
     { id: 'progress', label: 'Progreso', icon: <BarChart2 size={24} /> },
     { id: 'routines', label: 'Rutinas', icon: <Dumbbell size={24} /> },
     { id: 'settings', label: 'Ajustes', icon: <Settings size={24} /> },
   ];
+  // --- FIN DE LA MODIFICACIÓN ---
 
   return (
     <div className="relative flex w-full h-full overflow-hidden">
       <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-accent rounded-full opacity-20 filter blur-3xl -z-10 animate-roam-blob"></div>
 
       <nav className="hidden md:flex flex-col gap-10 p-8 w-64 h-full border-r border-[--glass-border] bg-bg-primary">
-        {/* --- INICIO DE LA CORRECCIÓN --- */}
         <button onClick={() => navigate('dashboard')} className="flex items-center justify-center gap-3 text-accent transition-transform hover:scale-105">
           <Dumbbell className="h-7 w-7 flex-shrink-0" />
           <h1 className="text-xl font-bold text-text-primary whitespace-nowrap">Pro Fitness Glass</h1>
         </button>
-        {/* --- FIN DE LA CORRECCIÓN --- */}
         <div className="flex flex-col gap-4">
           {navItems.map(item => (
             <button
@@ -229,7 +229,6 @@ export default function App() {
         />
       )}
 
-      {/* Botón volver al entreno: solo si hay entrenamiento activo con cronómetro iniciado */}
       {activeWorkout && workoutStartTime && view !== 'workout' && (
         <button
           onClick={() => navigate('workout')}
@@ -241,7 +240,7 @@ export default function App() {
       )}
 
       <div className="hidden md:block absolute bottom-4 right-4 z-50 bg-bg-secondary/50 text-text-muted text-xs px-2.5 py-1 rounded-full backdrop-blur-sm select-none">
-        v2.1.0
+        v2.5.0
       </div>
     </div>
   );

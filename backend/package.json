@@ -1,6 +1,6 @@
 {
   "name": "backend",
-  "version": "2.1.0",
+  "version": "2.5.0",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -9,7 +9,9 @@
     "db:migrate": "sequelize-cli db:migrate --env production",
     "db:migrate:dev": "sequelize-cli db:migrate",
     "db:seed": "sequelize-cli db:seed:all --env production",
-    "db:seed:undo": "sequelize-cli db:seed:undo:all --env production"
+    "db:seed:undo": "sequelize-cli db:seed:undo:all --env production",
+    "db:seed:dev": "sequelize-cli db:seed:all",
+    "db:seed:undo:dev": "sequelize-cli db:seed:undo:all"
   },
   "keywords": [],
   "author": "",
