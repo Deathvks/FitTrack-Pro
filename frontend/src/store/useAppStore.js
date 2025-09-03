@@ -510,6 +510,21 @@ const useAppStore = create((set, get) => ({
         return { success: false, message: `Error al actualizar: ${error.message}` };
     }
   },
+  // Nueva acción para verificar si mostrar el modal de bienvenida
+  checkWelcomeModal: () => {
+    const lastSeenVersion = localStorage.getItem('lastSeenVersion');
+    const currentVersion = '2.5.0';
+    
+    if (lastSeenVersion !== currentVersion) {
+      set({ showWelcomeModal: true });
+    }
+  },
+
+  // Nueva acción para cerrar el modal y marcar la versión como vista
+  closeWelcomeModal: () => {
+    localStorage.setItem('lastSeenVersion', '2.5.0');
+    set({ showWelcomeModal: false });
+  },
 }));
 
 export default useAppStore;

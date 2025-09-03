@@ -1,16 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-// --- INICIO DE LA MODIFICACIÓN ---
 import { Home, Dumbbell, BarChart2, Settings, LogOut, Zap, Utensils } from 'lucide-react';
-// --- FIN DE LA MODIFICACIÓN ---
 import useAppStore from './store/useAppStore';
 
 import Dashboard from './pages/Dashboard';
 import Progress from './pages/Progress';
 import Routines from './pages/Routines';
 import Workout from './pages/Workout';
-// --- INICIO DE LA MODIFICACIÓN ---
-import Nutrition from './pages/Nutrition'; // Importamos la nueva página que crearemos
-// --- FIN DE LA MODIFICACIÓN ---
+import Nutrition from './pages/Nutrition';
 import SettingsScreen from './pages/SettingsScreen';
 import LoginScreen from './pages/LoginScreen';
 import RegisterScreen from './pages/RegisterScreen';
@@ -19,6 +15,7 @@ import ProfileEditor from './pages/ProfileEditor';
 import AccountEditor from './pages/AccountEditor';
 import PRToast from './components/PRToast';
 import ConfirmationModal from './components/ConfirmationModal';
+import WelcomeModal from './components/WelcomeModal'; // Nuevo import
 import AdminPanel from './pages/AdminPanel.jsx';
 
 export default function App() {
@@ -31,6 +28,9 @@ export default function App() {
     handleLogout: performLogout,
     activeWorkout,
     workoutStartTime,
+    showWelcomeModal, // Nuevo estado
+    checkWelcomeModal, // Nueva acción
+    closeWelcomeModal, // Nueva acción
   } = useAppStore();
 
   const [view, setView] = useState(() => {
@@ -176,6 +176,13 @@ export default function App() {
   ];
   // --- FIN DE LA MODIFICACIÓN ---
 
+  // Verificar si mostrar el modal de bienvenida después del login
+  useEffect(() => {
+    if (isAuthenticated && userProfile && !isLoading) {
+      checkWelcomeModal();
+    }
+  }, [isAuthenticated, userProfile, isLoading, checkWelcomeModal]);
+
   return (
     <div className="relative flex w-full h-full overflow-hidden">
       <div className="absolute top-1/2 left-1/2 w-[300px] h-[300px] bg-accent rounded-full opacity-20 filter blur-3xl -z-10 animate-roam-blob"></div>
@@ -219,6 +226,11 @@ export default function App() {
       </nav>
 
       <PRToast newPRs={prNotification} onClose={() => useAppStore.setState({ prNotification: null })} />
+
+      {/* Modal de Bienvenida */}
+      {showWelcomeModal && (
+        <WelcomeModal onClose={closeWelcomeModal} />
+      )}
 
       {showLogoutConfirm && (
         <ConfirmationModal
