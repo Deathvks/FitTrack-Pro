@@ -216,11 +216,30 @@ const Nutrition = () => {
                             <div className="flex flex-col gap-3">
                                 {logs.length > 0 ? logs.map(log => (
                                     <div key={log.id} className="bg-bg-secondary p-3 rounded-md border border-glass-border group relative">
-                                        <p className="font-semibold pr-16">{log.description}</p>
-                                        <p className="text-sm text-text-secondary">{log.calories} kcal &bull; {log.protein_g || 0}g Prot &bull; {log.carbs_g || 0}g Carbs &bull; {log.fats_g || 0}g Grasas</p>
-                                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => setModal({ type: 'food', data: { ...log, mealType } })} className="p-2 rounded-full bg-bg-primary hover:text-accent"><Edit size={16}/></button>
-                                            <button onClick={() => setLogToDelete(log)} className="p-2 rounded-full bg-bg-primary hover:text-red"><Trash2 size={16}/></button>
+                                        {/* Contenido principal con espacio para botones en móvil */}
+                                        <div className="pr-20 sm:pr-16">
+                                            <p className="font-semibold">{log.description}</p>
+                                            <p className="text-sm text-text-secondary">
+                                                {log.calories} kcal • {log.protein_g || 0}g Prot • {log.carbs_g || 0}g Carbs • {log.fats_g || 0}g Grasas
+                                            </p>
+                                        </div>
+                                        
+                                        {/* Botones siempre visibles y responsivos */}
+                                        <div className="absolute top-1/2 -translate-y-1/2 right-2 flex flex-col sm:flex-row gap-1 sm:gap-1">
+                                            <button 
+                                                onClick={() => setModal({ type: 'food', data: { ...log, mealType } })} 
+                                                className="p-2 rounded-full bg-bg-primary hover:bg-accent/20 hover:text-accent transition-all duration-200 shadow-sm border border-glass-border"
+                                                title="Editar comida"
+                                            >
+                                                <Edit size={14} className="sm:w-4 sm:h-4"/>
+                                            </button>
+                                            <button 
+                                                onClick={() => setLogToDelete(log)} 
+                                                className="p-2 rounded-full bg-bg-primary hover:bg-red-500/20 hover:text-red-500 transition-all duration-200 shadow-sm border border-glass-border"
+                                                title="Eliminar comida"
+                                            >
+                                                <Trash2 size={14} className="sm:w-4 sm:h-4"/>
+                                            </button>
                                         </div>
                                     </div>
                                 )) : (
