@@ -112,6 +112,13 @@ export default function App() {
     document.body.classList.add(`accent-${accent}`);
   }, [accent]);
 
+  // MOVER ESTE useEffect AQUÍ - ANTES de los returns condicionales
+  useEffect(() => {
+    if (isAuthenticated && userProfile && !isLoading) {
+      checkWelcomeModal();
+    }
+  }, [isAuthenticated, userProfile, isLoading, checkWelcomeModal]);
+
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
   };
@@ -125,6 +132,7 @@ export default function App() {
     setView(viewName);
   }, []);
 
+  // Ahora los returns condicionales están DESPUÉS de todos los hooks
   if (isLoading) {
     return <div className="fixed inset-0 flex items-center justify-center bg-bg-primary">Cargando...</div>;
   }
@@ -176,12 +184,12 @@ export default function App() {
   ];
   // --- FIN DE LA MODIFICACIÓN ---
 
-  // Verificar si mostrar el modal de bienvenida después del login
-  useEffect(() => {
-    if (isAuthenticated && userProfile && !isLoading) {
-      checkWelcomeModal();
-    }
-  }, [isAuthenticated, userProfile, isLoading, checkWelcomeModal]);
+  // ELIMINAR este useEffect de aquí ya que lo movimos arriba
+  // useEffect(() => {
+  //   if (isAuthenticated && userProfile && !isLoading) {
+  //     checkWelcomeModal();
+  //   }
+  // }, [isAuthenticated, userProfile, isLoading, checkWelcomeModal]);
 
   return (
     <div className="relative flex w-full h-full overflow-hidden">
