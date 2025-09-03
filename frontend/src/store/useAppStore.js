@@ -68,7 +68,11 @@ const clearRestTimerInStorage = () => {
     localStorage.removeItem('restTimerInitialDuration');
 };
 
-const getTodayDateString = () => new Date().toISOString().split('T')[0];
+const getTodayDateString = () => {
+  const today = new Date();
+  console.log('Fecha actual:', today.toISOString().split('T')[0]);
+  return today.toISOString().split('T')[0];
+};
 
 const useAppStore = create((set, get) => ({
   // --- ESTADO ---
@@ -114,28 +118,43 @@ const useAppStore = create((set, get) => ({
     try {
       const profileData = await userService.getMyProfile();
       set({ userProfile: profileData, isAuthenticated: true });
-
+  
       if (profileData.goal) {
         const today = get().selectedDate;
-        // --- INICIO DE LA MODIFICACIÓN ---
-        const [routines, workouts, bodyweight, nutrition, favoriteMeals, templateRoutines] = await Promise.all([
-          routineService.getRoutines(),
-          workoutService.getWorkouts(),
-          bodyweightService.getHistory(),
-          nutritionService.getNutritionLogsByDate(today),
-          favoriteMealService.getFavoriteMeals(),
-          templateRoutineService.getTemplateRoutines(), // Se cargan las rutinas predefinidas
-        ]);
-        set({
-          routines,
-          workoutLog: workouts,
-          bodyWeightLog: bodyweight,
-          nutritionLog: nutrition.nutrition,
-          waterLog: nutrition.water,
-          favoriteMeals,
-          templateRoutines, // Se guardan en el estado
-        });
-        // --- FIN DE LA MODIFICACIÓN ---
+        try {
+          const [routines, workouts, bodyweight, nutrition, favoriteMeals, templateRoutines] = await Promise.all([
+            routineService.getRoutines(),
+            workoutService.getWorkouts(),
+            bodyweightService.getHistory(),
+            nutritionService.getNutritionLogsByDate(today).catch(err => {
+              console.error('Error cargando nutrición:', err);
+              return { nutrition: [], water: { quantity_ml: 0 } };
+            }),
+            favoriteMealService.getFavoriteMeals(),
+            templateRoutineService.getTemplateRoutines(),
+          ]);
+          set({
+            routines,
+            workoutLog: workouts,
+            bodyWeightLog: bodyweight,
+            nutritionLog: nutrition.nutrition,
+            waterLog: nutrition.water,
+            favoriteMeals,
+            templateRoutines,
+          });
+        } catch (error) {
+          console.error('Error cargando datos iniciales:', error);
+          // Continuar con datos vacíos en lugar de fallar completamente
+          set({
+            routines: [],
+            workoutLog: [],
+            bodyWeightLog: [],
+            nutritionLog: [],
+            waterLog: { quantity_ml: 0 },
+            favoriteMeals: [],
+            templateRoutines: {},
+          });
+        }
       }
     } catch (error) {
       console.error("Error de autenticación:", error);
@@ -225,7 +244,7 @@ const useAppStore = create((set, get) => ({
 
   startWorkout: (routine) => {
     const exercises = routine.RoutineExercises || routine.TemplateRoutineExercises || [];
-    const sessionTemplate = exercises.map((ex, index) => ({
+    const sessionTemplate = exercises.map((ex) => ({
         ...ex,
         // Asegurar que los ejercicios de plantilla tengan valores por defecto correctos
         superset_group_id: ex.superset_group_id || null,

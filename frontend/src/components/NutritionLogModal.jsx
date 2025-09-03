@@ -12,6 +12,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
     protein_g: '',
     carbs_g: '',
     fats_g: '',
+    weight_g: '',
   });
   
   const [view, setView] = useState('manual');
@@ -41,6 +42,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
         protein_g: logToEdit.protein_g || '',
         carbs_g: logToEdit.carbs_g || '',
         fats_g: logToEdit.fats_g || '',
+        weight_g: logToEdit.weight_g || '',
       });
     }
   }, [logToEdit]);
@@ -75,7 +77,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (['calories', 'protein_g', 'carbs_g', 'fats_g'].includes(name)) {
+    if (['calories', 'protein_g', 'carbs_g', 'fats_g', 'weight_g'].includes(name)) {
       if (/^\d*\.?\d*$/.test(value)) {
         setFormData(prev => ({ ...prev, [name]: value }));
       }
@@ -108,6 +110,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
         protein_g: logToEdit.protein_g || '',
         carbs_g: logToEdit.carbs_g || '',
         fats_g: logToEdit.fats_g || '',
+        weight_g: logToEdit.weight_g || '',
       });
       // Resetear estados de favoritos al cambiar la comida editada
       setSaveAsFavorite(false);
@@ -128,6 +131,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
       protein_g: parseFloat(formData.protein_g) || 0,
       carbs_g: parseFloat(formData.carbs_g) || 0,
       fats_g: parseFloat(formData.fats_g) || 0,
+      weight_g: parseFloat(formData.weight_g) || 0,
     };
 
     // Lógica para manejar favoritos
@@ -179,11 +183,9 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
   const title = `${logToEdit ? 'Editar' : 'Añadir'} Registro en ${mealTitles[mealType]}`;
   const baseInputClasses = "w-full bg-bg-secondary border border-glass-border rounded-md px-4 py-3 text-text-primary focus:border-accent focus:ring-accent/50 focus:ring-2 outline-none transition";
   
-  // --- INICIO DE LA MODIFICACIÓN DE ESTILOS ---
   const baseButtonClasses = "px-4 py-2 rounded-full font-semibold transition-colors flex-1";
   const activeModeClasses = "bg-accent text-bg-secondary";
   const inactiveModeClasses = "bg-bg-secondary hover:bg-white/10 text-text-secondary";
-  // --- FIN DE LA MODIFICACIÓN DE ESTILOS ---
 
   return (
     <div
@@ -200,7 +202,6 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
 
         <h3 className="text-xl font-bold text-center mb-4">{title}</h3>
 
-        {/* --- INICIO DE LA MODIFICACIÓN DE ESTILOS --- */}
         <div className="flex items-center justify-center gap-1 mx-auto mb-6 p-1 rounded-full bg-bg-primary border border-glass-border w-full">
           <button onClick={() => setView('manual')} className={`${baseButtonClasses} ${view === 'manual' ? activeModeClasses : inactiveModeClasses}`}>
             <Plus size={16} className="inline mr-1" /> Manual
@@ -209,8 +210,6 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
             <BookMarked size={16} className="inline mr-1" /> Guardadas
           </button>
         </div>
-        {/* --- FIN DE LA MODIFICACIÓN DE ESTILOS --- */}
-
 
         {view === 'manual' && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 animate-[fade-in_0.3s]">
@@ -237,34 +236,22 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
               </div>
             </div>
 
-            {!logToEdit && (
-              <div className="pt-4 border-t border-glass-border">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input 
-                      type="checkbox"
-                      checked={saveAsFavorite}
-                      onChange={(e) => setSaveAsFavorite(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
-                      saveAsFavorite 
-                        ? 'bg-accent border-accent' 
-                        : 'bg-bg-secondary border-glass-border group-hover:border-accent/50'
-                    }`}>
-                      {saveAsFavorite && (
-                        <svg className="w-3 h-3 text-bg-secondary" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium text-text-secondary group-hover:text-text-primary transition-colors">Guardar esta comida en mis favoritos</span>
-                </label>
-              </div>
-            )}
+            {/* Campo de Gramos */}
+            <div>
+              <label htmlFor="weight_g" className="block text-sm font-medium text-text-secondary mb-2">Gramos (g)</label>
+              <input 
+                id="weight_g" 
+                name="weight_g" 
+                type="text" 
+                inputMode="decimal" 
+                value={formData.weight_g} 
+                onChange={handleChange} 
+                className={baseInputClasses} 
+                placeholder="Ej: 150" 
+              />
+            </div>
 
-            {/* Sección de favoritos - ahora se muestra tanto para crear como para editar */}
+            {/* Sección de favoritos */}
             <div className="pt-4 border-t border-glass-border">
               {logToEdit ? (
                 // Cuando se está editando una comida
