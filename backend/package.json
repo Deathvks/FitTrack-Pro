@@ -4,11 +4,14 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "migrate": "sequelize-cli db:migrate",
-    "migrate:status": "sequelize-cli db:migrate:status",
-    "seed": "sequelize-cli db:seed:all",
-    "postinstall": "sequelize-cli db:migrate"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node start.js",
+    "db:migrate": "sequelize-cli db:migrate --env production",
+    "db:migrate:dev": "sequelize-cli db:migrate",
+    "db:seed": "sequelize-cli db:seed:all --env production",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all --env production",
+    "db:seed:dev": "sequelize-cli db:seed:all",
+    "db:seed:undo:dev": "sequelize-cli db:seed:undo:all"
   },
   "keywords": [],
   "author": "",

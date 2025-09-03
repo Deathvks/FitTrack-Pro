@@ -216,6 +216,11 @@ const useAppStore = create((set, get) => ({
   handleLogout: async () => {
     localStorage.removeItem('fittrack_token');
     localStorage.removeItem('lastView');
+    // Limpiar filtros de rutinas predefinidas
+    localStorage.removeItem('templateRoutinesSearchQuery');
+    localStorage.removeItem('templateRoutinesSelectedCategory');
+    localStorage.removeItem('templateRoutinesSelectedDifficulty');
+    localStorage.removeItem('templateRoutinesShowFilters');
     clearWorkoutInStorage();
     clearRestTimerInStorage();
     set({

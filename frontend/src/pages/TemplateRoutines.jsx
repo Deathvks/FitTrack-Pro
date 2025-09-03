@@ -72,11 +72,36 @@ const TemplateRoutines = ({ setView }) => {
   const startWorkout = useAppStore(state => state.startWorkout);
   const fetchInitialData = useAppStore(state => state.fetchInitialData);
 
-  // Estados para filtros y búsqueda
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
+  // Estados para filtros y búsqueda con persistencia en localStorage
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return localStorage.getItem('templateRoutinesSearchQuery') || '';
+  });
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    return localStorage.getItem('templateRoutinesSelectedCategory') || 'all';
+  });
+  const [selectedDifficulty, setSelectedDifficulty] = useState(() => {
+    return localStorage.getItem('templateRoutinesSelectedDifficulty') || 'all';
+  });
+  const [showFilters, setShowFilters] = useState(() => {
+    return localStorage.getItem('templateRoutinesShowFilters') === 'true';
+  });
+
+  // Efectos para guardar en localStorage cuando cambien los filtros
+  useEffect(() => {
+    localStorage.setItem('templateRoutinesSearchQuery', searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    localStorage.setItem('templateRoutinesSelectedCategory', selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    localStorage.setItem('templateRoutinesSelectedDifficulty', selectedDifficulty);
+  }, [selectedDifficulty]);
+
+  useEffect(() => {
+    localStorage.setItem('templateRoutinesShowFilters', showFilters.toString());
+  }, [showFilters]);
 
   const handleCopyToMyRoutines = async (template) => {
     const exercises = template.TemplateRoutineExercises.map(({ id, template_routine_id, ...ex }) => ex);
@@ -187,6 +212,10 @@ const TemplateRoutines = ({ setView }) => {
     setSearchQuery('');
     setSelectedCategory('all');
     setSelectedDifficulty('all');
+    // También limpiar del localStorage
+    localStorage.removeItem('templateRoutinesSearchQuery');
+    localStorage.removeItem('templateRoutinesSelectedCategory');
+    localStorage.removeItem('templateRoutinesSelectedDifficulty');
   };
 
   const getDifficultyColor = (difficulty) => {
