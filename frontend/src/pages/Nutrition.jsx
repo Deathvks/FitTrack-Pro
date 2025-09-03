@@ -218,7 +218,10 @@ const Nutrition = () => {
                                     <div key={log.id} className="bg-bg-secondary p-3 rounded-md border border-glass-border group relative">
                                         {/* Contenido principal con espacio para botones en móvil */}
                                         <div className="pr-20 sm:pr-16">
-                                            <p className="font-semibold">{log.description}</p>
+                                            <p className="font-semibold">
+                                                {log.description}
+                                                {log.weight_g && ` (${log.weight_g}g)`}
+                                            </p>
                                             <p className="text-sm text-text-secondary">
                                                 {log.calories} kcal • {log.protein_g || 0}g Prot • {log.carbs_g || 0}g Carbs • {log.fats_g || 0}g Grasas
                                             </p>
