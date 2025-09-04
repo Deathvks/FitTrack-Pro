@@ -1,28 +1,27 @@
 import React from 'react';
-import { X, Utensils, Droplets, Dumbbell, Bug, Sparkles } from 'lucide-react';
-import GlassCard from './GlassCard';
+import { X, Palette, Smartphone, Code, Wrench, Sparkles } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Utensils className="w-6 h-6 text-accent" />,
-      title: "Página de Nutrición",
-      description: "Registra tus comidas, controla calorías y gestiona tus favoritos"
+      icon: <Palette className="w-6 h-6 text-accent" />,
+      title: "Modales con Fondo Blanco",
+      description: "Mejor contraste y legibilidad en modo claro con fondos blancos sólidos"
     },
     {
-      icon: <Droplets className="w-6 h-6 text-blue-400" />,
-      title: "Seguimiento de Agua",
-      description: "Mantén un registro diario de tu hidratación"
+      icon: <Smartphone className="w-6 h-6 text-blue-400" />,
+      title: "Experiencia Visual Mejorada",
+      description: "Interfaz más limpia y consistente en todos los modales de la aplicación"
     },
     {
-      icon: <Dumbbell className="w-6 h-6 text-accent" />,
-      title: "Ejercicios por Defecto",
-      description: "Rutinas predefinidas listas para usar"
+      icon: <Code className="w-6 h-6 text-accent" />,
+      title: "Correcciones Técnicas",
+      description: "Resolución de errores JSX y mejor mantenimiento del código"
     },
     {
-      icon: <Bug className="w-6 h-6 text-red-400" />,
-      title: "Correcciones de Errores",
-      description: "Mejoras en rendimiento y estabilidad"
+      icon: <Wrench className="w-6 h-6 text-red-400" />,
+      title: "Compatibilidad con Temas",
+      description: "Mantiene la estética glass en modo oscuro y mejora la claridad en modo claro"
     }
   ];
 
@@ -31,8 +30,8 @@ const WelcomeModal = ({ onClose }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]"
       onClick={onClose}
     >
-      <GlassCard 
-        className="p-6 m-4 w-full max-w-md" 
+      <div 
+        className="bg-bg-primary rounded-2xl shadow-xl p-6 m-4 w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -42,22 +41,24 @@ const WelcomeModal = ({ onClose }) => {
               <Sparkles className="w-6 h-6 text-accent" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.5!</h2>
-              <p className="text-sm text-text-secondary">Nuevas características disponibles</p>
+              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.5.2!</h2>
+              <p className="text-sm text-text-secondary">Mejoras de interfaz de usuario</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            className="p-2 rounded-full hover:bg-bg-secondary transition-colors"
           >
             <X className="w-5 h-5 text-text-secondary" />
           </button>
         </div>
 
         {/* Features List */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-3 mb-6">
           {features.map((feature, index) => (
-            <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors">
+            <div key={index} className="flex items-start gap-3 p-4 rounded-xl 
+                                        bg-bg-secondary hover:bg-bg-tertiary
+                                        transition-colors duration-200">
               <div className="flex-shrink-0 mt-0.5">
                 {feature.icon}
               </div>
@@ -72,11 +73,11 @@ const WelcomeModal = ({ onClose }) => {
         {/* Action Button */}
         <button 
           onClick={onClose}
-          className="w-full px-6 py-3 rounded-full font-semibold bg-accent text-bg-secondary hover:bg-accent/80 transition-colors"
+          className="w-full px-6 py-3 rounded-xl font-semibold bg-accent text-white hover:bg-accent/90 transition-colors"
         >
           ¡Empezar a Explorar!
         </button>
-      </GlassCard>
+      </div>
     </div>
   );
 };

@@ -30,6 +30,12 @@ const Routines = ({ setView }) => {
 
   // Inicializar activeTab desde localStorage o usar 'myRoutines' por defecto
   const [activeTab, setActiveTab] = useState(() => {
+    // Verificar si hay una pestaña forzada desde la navegación
+    const forcedTab = localStorage.getItem('routinesForceTab');
+    if (forcedTab) {
+      localStorage.removeItem('routinesForceTab'); // Limpiar después de usar
+      return forcedTab;
+    }
     return localStorage.getItem('routinesActiveTab') || 'myRoutines';
   });
 

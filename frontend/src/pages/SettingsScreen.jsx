@@ -1,6 +1,7 @@
 import React from 'react';
-import { ChevronLeft, Check, Palette, Sun, Moon, MonitorCog, User, UserCog, Shield, LogOut } from 'lucide-react';
+import { ChevronLeft, Check, Palette, Sun, Moon, MonitorCog, User, UserCog, Shield, LogOut, Info } from 'lucide-react';
 import useAppStore from '../store/useAppStore';
+import { APP_VERSION } from '../config/version';
 
 const ACCENT_OPTIONS = [
   { id: 'green',  label: 'Verde',    hex: '#22c55e' },
@@ -160,9 +161,17 @@ export default function SettingsScreen({
             <LogOut size={18} />
             Cerrar sesión
           </button>
+        </aside>
 
-          <div className="md:hidden text-center text-xs text-text-muted mt-4">
-            v2.5.0
+        <aside className="lg:hidden rounded-2xl border border-[--glass-border] bg-[--glass-bg] backdrop-blur-glass p-5 flex flex-col gap-3">
+          <h2 className="text-lg font-semibold mb-1">Información</h2>
+
+          <div className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-[--glass-border]">
+            <Info size={18} className="text-accent" />
+            <div>
+              <div className="text-sm font-semibold">Información de la aplicación</div>
+              <div className="text-xs text-text-secondary">Versión {APP_VERSION}</div>
+            </div>
           </div>
         </aside>
       </div>

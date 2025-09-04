@@ -31,8 +31,8 @@ const WaterLogModal = ({ initialQuantity = 0, onSave, onClose, isLoading }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]"
       onClick={onClose}
     >
-      <GlassCard
-        className="relative w-11/12 max-w-sm p-8 m-4 text-center mx-auto"
+      <div
+        className="relative w-11/12 max-w-sm p-8 m-4 text-center mx-auto rounded-2xl border backdrop-blur-md bg-white/95 border-black/10 dark:bg-glass-bg dark:border-glass-border"
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition">
@@ -115,7 +115,7 @@ const WaterLogModal = ({ initialQuantity = 0, onSave, onClose, isLoading }) => {
             {isLoading ? <Spinner /> : 'Guardar'}
         </button>
 
-      </GlassCard>
+      </div>
     </div>
   );
 };

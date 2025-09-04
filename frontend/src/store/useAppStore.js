@@ -3,13 +3,11 @@ import * as authService from '../services/authService';
 import * as userService from '../services/userService';
 import * as routineService from '../services/routineService';
 import * as workoutService from '../services/workoutService';
-import * as bodyweightService from '../services/bodyweightService';
+import * as bodyWeightService from '../services/bodyWeightService';
 import * as nutritionService from '../services/nutritionService';
 import * as favoriteMealService from '../services/favoriteMealService';
-// --- INICIO DE LA MODIFICACIÓN ---
-import * as templateRoutineService from '../services/templateRoutineService'; // Se importa el nuevo servicio
-// --- FIN DE LA MODIFICACIÓN ---
-
+import * as templateRoutineService from '../services/templateRoutineService';
+import { APP_VERSION } from '../config/version';
 
 const getFullStateFromStorage = () => {
   try {
@@ -125,7 +123,7 @@ const useAppStore = create((set, get) => ({
           const [routines, workouts, bodyweight, nutrition, favoriteMeals, templateRoutines] = await Promise.all([
             routineService.getRoutines(),
             workoutService.getWorkouts(),
-            bodyweightService.getHistory(),
+            bodyWeightService.getHistory(),
             nutritionService.getNutritionLogsByDate(today).catch(err => {
               console.error('Error cargando nutrición:', err);
               return { nutrition: [], water: { quantity_ml: 0 } };
@@ -517,7 +515,7 @@ const useAppStore = create((set, get) => ({
 
   logBodyWeight: async (weightData) => {
     try {
-        await bodyweightService.logWeight(weightData);
+        await bodyWeightService.logWeight(weightData);
         await get().fetchInitialData();
         return { success: true, message: 'Peso registrado con éxito.' };
     } catch (error) {
@@ -527,7 +525,7 @@ const useAppStore = create((set, get) => ({
 
   updateTodayBodyWeight: async (weightData) => {
     try {
-        await bodyweightService.updateTodaysWeight(weightData);
+        await bodyWeightService.updateTodaysWeight(weightData);
         await get().fetchInitialData();
         return { success: true, message: 'Peso actualizado con éxito.' };
     } catch (error) {
@@ -537,7 +535,7 @@ const useAppStore = create((set, get) => ({
   // Nueva acción para verificar si mostrar el modal de bienvenida
   checkWelcomeModal: () => {
     const lastSeenVersion = localStorage.getItem('lastSeenVersion');
-    const currentVersion = '2.5.0';
+    const currentVersion = APP_VERSION;
     
     if (lastSeenVersion !== currentVersion) {
       set({ showWelcomeModal: true });
@@ -546,7 +544,7 @@ const useAppStore = create((set, get) => ({
 
   // Nueva acción para cerrar el modal y marcar la versión como vista
   closeWelcomeModal: () => {
-    localStorage.setItem('lastSeenVersion', '2.5.0');
+    localStorage.setItem('lastSeenVersion', APP_VERSION);
     set({ showWelcomeModal: false });
   },
 }));

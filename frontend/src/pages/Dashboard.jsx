@@ -120,7 +120,7 @@ const Dashboard = ({ setView }) => {
                                 <p className="text-text-muted text-center py-4">No tienes rutinas. ¡Crea una para empezar!</p>
                             )}
                         </div>
-                        <button onClick={() => setView('routines')} className="flex items-center justify-center gap-2 w-full rounded-md bg-accent/10 text-accent font-semibold py-3 border border-accent/20 hover:bg-accent/20 transition-colors">
+                        <button onClick={() => setView('routines', { forceTab: 'myRoutines' })} className="flex items-center justify-center gap-2 w-full rounded-md bg-accent/10 text-accent font-semibold py-3 border border-accent/20 hover:bg-accent/20 transition-colors">
                             <Plus size={20} />
                             <span>Ver todas mis rutinas</span>
                         </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Home, Dumbbell, BarChart2, Settings, LogOut, Zap, Utensils } from 'lucide-react';
 import useAppStore from './store/useAppStore';
+import { APP_VERSION } from './config/version';
 
 import Dashboard from './pages/Dashboard';
 import Progress from './pages/Progress';
@@ -128,8 +129,12 @@ export default function App() {
     setShowLogoutConfirm(false);
   };
 
-  const navigate = useCallback((viewName) => {
+  const navigate = useCallback((viewName, options = {}) => {
     setView(viewName);
+    // Guardar opciones de navegación para que los componentes puedan acceder a ellas
+    if (options.forceTab) {
+      localStorage.setItem('routinesForceTab', options.forceTab);
+    }
   }, []);
 
   // Ahora los returns condicionales están DESPUÉS de todos los hooks
@@ -260,7 +265,7 @@ export default function App() {
       )}
 
       <div className="hidden md:block absolute bottom-4 right-4 z-50 bg-bg-secondary/50 text-text-muted text-xs px-2.5 py-1 rounded-full backdrop-blur-sm select-none">
-        v2.5.0
+        v{APP_VERSION}
       </div>
     </div>
   );

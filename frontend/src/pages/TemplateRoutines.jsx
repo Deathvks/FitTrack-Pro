@@ -104,7 +104,13 @@ const TemplateRoutines = ({ setView }) => {
   }, [showFilters]);
 
   const handleCopyToMyRoutines = async (template) => {
-    const exercises = template.TemplateRoutineExercises.map(({ id, template_routine_id, ...ex }) => ex);
+    // Evitar no-used-vars de ESLint eliminando propiedades sin declararlas
+    const exercises = template.TemplateRoutineExercises.map((ex) => {
+      const newEx = { ...ex };
+      delete newEx.id;
+      delete newEx.template_routine_id;
+      return newEx;
+    });
 
     const newRoutine = {
       name: `${template.name} (Copia)`,
@@ -385,18 +391,18 @@ const TemplateRoutines = ({ setView }) => {
                     </div>
                   </div>
                   
-                  {/* Botones de acción */}
-                  <div className="flex items-center gap-3 mt-6 pt-4 border-t border-glass-border">
+                  {/* Botones de acción centrados */}
+                  <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-glass-border">
                     <button 
                       onClick={() => handleCopyToMyRoutines(routine)} 
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition text-sm"
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition text-sm"
                     >
                       <Copy size={16} />
                       Copiar
                     </button>
                     <button 
                       onClick={() => handleStartWorkout(routine)} 
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-bg-secondary font-semibold hover:scale-105 transition text-sm"
+                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-bg-secondary font-semibold hover:scale-105 transition text-sm"
                     >
                       <Play size={16} />
                       Empezar

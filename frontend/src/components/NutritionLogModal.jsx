@@ -193,7 +193,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
       onClick={onClose}
     >
       <GlassCard
-        className="relative w-11/12 max-w-md p-6 sm:p-8 m-4"
+        className="relative w-11/12 max-w-md p-6 sm:p-8 m-4 rounded-2xl border backdrop-blur-glass bg-white/95 border-black/10 dark:bg-[--glass-bg] dark:border-[--glass-border]"
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition">
