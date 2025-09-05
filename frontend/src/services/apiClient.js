@@ -2,6 +2,12 @@ import useAppStore from '../store/useAppStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// --- INICIO DE LA MODIFICACIÓN ---
+if (!API_BASE_URL) {
+  throw new Error('FATAL ERROR: La variable de entorno VITE_API_BASE_URL no está definida. Por favor, configura esta variable en tu entorno de despliegue (ej: Zeabur) apuntando a la URL de tu backend.');
+}
+// --- FIN DE LA MODIFICACIÓN ---
+
 const apiClient = async (endpoint, options = {}) => {
     const token = useAppStore.getState().token;
     const { body, ...customConfig } = options;
