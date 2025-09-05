@@ -30,6 +30,9 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
     carbs100: '',
     fats100: '',
   });
+  
+  // Agregar el estado faltante para almacenar los valores originales
+  const [originalData, setOriginalData] = useState(null);
 
   // Helpers de cálculo
   const round = (val, decimals = 0) => {
@@ -179,17 +182,16 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
 
   useEffect(() => {
     if (logToEdit) {
-      setFormData({
+      const initialData = {
         description: logToEdit.description || '',
         calories: logToEdit.calories || '',
         protein_g: logToEdit.protein_g || '',
         carbs_g: logToEdit.carbs_g || '',
         fats_g: logToEdit.fats_g || '',
         weight_g: logToEdit.weight_g || '',
-      });
-      // Resetear estados de favoritos al cambiar la comida editada
-      setSaveAsFavorite(false);
-      setRemoveFromFavorites(false);
+      };
+      setFormData(initialData);
+      setOriginalData(initialData); // Guardar los valores originales
     }
   }, [logToEdit]);
   
@@ -208,6 +210,23 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
       fats_g: parseFloat(formData.fats_g) || 0,
       weight_g: parseFloat(formData.weight_g) || 0,
     };
+
+    // Verificar si hay cambios cuando se está editando
+    if (logToEdit && originalData) {
+      const hasChanges = 
+        formData.description !== originalData.description ||
+        formData.calories !== originalData.calories ||
+        formData.protein_g !== originalData.protein_g ||
+        formData.carbs_g !== originalData.carbs_g ||
+        formData.fats_g !== originalData.fats_g ||
+        formData.weight_g !== originalData.weight_g ||
+        saveAsFavorite || removeFromFavorites;
+      
+      if (!hasChanges) {
+        addToast('No se han realizado cambios en la comida.', 'error');
+        return;
+      }
+    }
 
     // Lógica para manejar favoritos
     if (logToEdit) {
@@ -488,26 +507,32 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
             ))}
 
             {favoriteMeals.length > 0 && (
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-2 gap-2">
                 <button
-                  className="px-3 py-1 rounded-md border border-glass-border text-text-secondary hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-shrink-0 px-2 sm:px-3 py-1 rounded-md border border-glass-border text-text-secondary hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed text-xs sm:text-sm"
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
                   <span className="inline-flex items-center gap-1">
-                    <ChevronLeft size={16} /> Anterior
+                    <ChevronLeft size={14} className="sm:hidden" />
+                    <ChevronLeft size={16} className="hidden sm:inline" />
+                    <span className="hidden xs:inline">Anterior</span>
                   </span>
                 </button>
-                <span className="text-sm text-text-secondary">
-                  Página {currentPage} de {totalPages}
+                <span className="text-xs sm:text-sm text-text-secondary text-center flex-1 px-1">
+                  <span className="hidden xs:inline">Página </span>
+                  {currentPage}<span className="hidden xs:inline"> de {totalPages}</span>
+                  <span className="xs:hidden">/{totalPages}</span>
                 </span>
                 <button
-                  className="px-3 py-1 rounded-md border border-glass-border text-text-secondary hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-shrink-0 px-2 sm:px-3 py-1 rounded-md border border-glass-border text-text-secondary hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed text-xs sm:text-sm"
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                 >
                   <span className="inline-flex items-center gap-1">
-                    Siguiente <ChevronRight size={16} />
+                    <span className="hidden xs:inline">Siguiente</span>
+                    <ChevronRight size={14} className="sm:hidden" />
+                    <ChevronRight size={16} className="hidden sm:inline" />
                   </span>
                 </button>
               </div>

@@ -41,7 +41,7 @@ const WelcomeModal = ({ onClose }) => {
               <Sparkles className="w-6 h-6 text-accent" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.6.0!</h2>
+              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.6.1!</h2>
               <p className="text-sm text-text-secondary">Nuevas funciones de nutrición y mejoras de UI</p>
             </div>
           </div>
