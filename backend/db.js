@@ -17,6 +17,15 @@ const commonOptions = {
 // --- FIN DE LA MODIFICACIÓN ---
 
 if (isProduction) {
+  // Se añaden validaciones para las variables de entorno en producción
+  const requiredVars = ['MYSQL_USERNAME', 'MYSQL_PASSWORD', 'MYSQL_HOST', 'MYSQL_PORT', 'MYSQL_DATABASE'];
+  const missingVars = requiredVars.filter(v => !process.env[v]);
+
+  if (missingVars.length > 0) {
+    // Si falta alguna variable, el proceso se detendrá con un error claro
+    throw new Error(`Faltan variables de entorno de producción requeridas: ${missingVars.join(', ')}`);
+  }
+  
   // Construye la URL de conexión para producción usando las variables de Zeabur
   const dbUrl = `mysql://${process.env.MYSQL_USERNAME}:${process.env.MYSQL_PASSWORD}@${process.env.MYSQL_HOST}:${process.env.MYSQL_PORT}/${process.env.MYSQL_DATABASE}`;
 
