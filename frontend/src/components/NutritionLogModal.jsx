@@ -1,5 +1,6 @@
+// NutritionLogModal component
 import React, { useState, useEffect } from 'react';
-import { X, BookMarked, Plus, Trash2, ChevronLeft, ChevronRight, Heart, HeartOff } from 'lucide-react';
+import { X, BookMarked, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import GlassCard from './GlassCard';
 import Spinner from './Spinner';
 import useAppStore from '../store/useAppStore';
@@ -20,7 +21,35 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
   const [removeFromFavorites, setRemoveFromFavorites] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  
+
+  // NUEVO: modo por 100 g y estado de valores por 100 g
+  const [per100Mode, setPer100Mode] = useState(false);
+  const [per100, setPer100] = useState({
+    calories100: '',
+    protein100: '',
+    carbs100: '',
+    fats100: '',
+  });
+
+  // Helpers de cálculo
+  const round = (val, decimals = 0) => {
+    const n = parseFloat(val);
+    if (isNaN(n)) return 0;
+    const p = Math.pow(10, decimals);
+    return Math.round(n * p) / p;
+  };
+
+  const computeFromPer100 = (cal100, p100, c100, f100, grams) => {
+    const factor = (parseFloat(grams) || 0) / 100;
+    return {
+      calories: Math.round((parseFloat(cal100) || 0) * factor),
+      protein_g: round((parseFloat(p100) || 0) * factor, 1),
+      carbs_g: round((parseFloat(c100) || 0) * factor, 1),
+      fats_g: round((parseFloat(f100) || 0) * factor, 1),
+      weight_g: parseFloat(grams) || 0,
+    };
+  };
+
   const { favoriteMeals, addFavoriteMeal, deleteFavoriteMeal } = useAppStore(state => ({
     favoriteMeals: state.favoriteMeals,
     addFavoriteMeal: state.addFavoriteMeal,
@@ -29,7 +58,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
   const { addToast } = useToast();
 
   // Calcular elementos paginados
-  const totalPages = Math.ceil(favoriteMeals.length / itemsPerPage);
+  const totalPages = Math.ceil(favoriteMeals.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedMeals = favoriteMeals.slice(startIndex, endIndex);
@@ -61,6 +90,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
       protein_g: meal.protein_g,
       carbs_g: meal.carbs_g,
       fats_g: meal.fats_g,
+      weight_g: meal.weight_g || '',
     });
     setView('manual');
   };
@@ -75,17 +105,62 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
     }
   };
 
+  // NUEVO: cambios para soportar recálculo al cambiar 'weight_g' en modo por 100 g
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (['calories', 'protein_g', 'carbs_g', 'fats_g', 'weight_g'].includes(name)) {
       if (/^\d*\.?\d*$/.test(value)) {
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'weight_g' && per100Mode) {
+          const computed = computeFromPer100(
+            per100.calories100,
+            per100.protein100,
+            per100.carbs100,
+            per100.fats100,
+            value
+          );
+          setFormData(prev => ({ ...prev, ...computed }));
+        } else {
+          setFormData(prev => ({ ...prev, [name]: value }));
+        }
       }
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
+  // NUEVO: handler para inputs por 100 g
+  const handleChangePer100 = (e) => {
+    const { name, value } = e.target; // calories100 | protein100 | carbs100 | fats100
+    if (!/^\d*\.?\d*$/.test(value)) return;
+    setPer100(prev => ({ ...prev, [name]: value }));
+    if (per100Mode) {
+      const computed = computeFromPer100(
+        name === 'calories100' ? value : per100.calories100,
+        name === 'protein100' ? value : per100.protein100,
+        name === 'carbs100' ? value : per100.carbs100,
+        name === 'fats100' ? value : per100.fats100,
+        formData.weight_g
+      );
+      setFormData(prev => ({ ...prev, ...computed }));
+    }
+  };
+
+  // NUEVO: al activar el modo por 100 g, intentar pre-rellenar per100 desde los datos actuales
+  useEffect(() => {
+    if (per100Mode) {
+      const w = parseFloat(formData.weight_g);
+      if (w > 0) {
+        setPer100({
+          calories100: ((parseFloat(formData.calories) || 0) / w * 100).toFixed(0),
+          protein100: ((parseFloat(formData.protein_g) || 0) / w * 100).toFixed(1),
+          carbs100: ((parseFloat(formData.carbs_g) || 0) / w * 100).toFixed(1),
+          fats100: ((parseFloat(formData.fats_g) || 0) / w * 100).toFixed(1),
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [per100Mode]);
+  
   // Función para verificar si una comida ya existe en favoritos
   const isAlreadyFavorite = () => {
     if (!logToEdit || !formData.description) return false;
@@ -136,11 +211,10 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
 
     // Lógica para manejar favoritos
     if (logToEdit) {
-      // Cuando se está editando una comida
+      // Editando una comida
       const existingFavorite = getExistingFavoriteMeal();
       
       if (removeFromFavorites && existingFavorite) {
-        // Quitar de favoritos
         const result = await deleteFavoriteMeal(existingFavorite.id);
         if (result.success) {
           addToast(result.message, 'success');
@@ -148,7 +222,6 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
           addToast(result.message, 'error');
         }
       } else if (saveAsFavorite && !existingFavorite) {
-        // Agregar a favoritos
         const favMealData = { name: dataToSave.description, ...dataToSave };
         const result = await addFavoriteMeal(favMealData);
         if (result.success) {
@@ -158,7 +231,7 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
         }
       }
     } else {
-      // Cuando se está creando una nueva comida (lógica existente)
+      // Nueva comida
       if (saveAsFavorite) {
         const favMealData = { name: dataToSave.description, ...dataToSave };
         const result = await addFavoriteMeal(favMealData);
@@ -187,13 +260,26 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
   const activeModeClasses = "bg-accent text-bg-secondary";
   const inactiveModeClasses = "bg-bg-secondary hover:bg-white/10 text-text-secondary";
 
+  // Detectar tema actual (según clase en <body>) y reaccionar a cambios
+  const [isDarkTheme, setIsDarkTheme] = useState(() =>
+    typeof document !== 'undefined' && document.body.classList.contains('dark-theme')
+  );
+
+  useEffect(() => {
+    const update = () => setIsDarkTheme(document.body.classList.contains('dark-theme'));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]"
       onClick={onClose}
     >
       <GlassCard
-        className="relative w-11/12 max-w-md p-6 sm:p-8 m-4 rounded-2xl border backdrop-blur-glass bg-white/95 border-black/10 dark:bg-[--glass-bg] dark:border-[--glass-border]"
+        className={`relative w-11/12 max-w-md p-6 sm:p-8 m-4 rounded-2xl border backdrop-blur-glass ${isDarkTheme ? '' : '!bg-white/95 !border-black/10'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition">
@@ -213,189 +299,227 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
 
         {view === 'manual' && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 animate-[fade-in_0.3s]">
+            {/* NUEVO: interruptor 'Por 100 g' */}
+            <div className="flex items-center justify-between -mt-2">
+              <label className="text-sm font-medium text-text-secondary">Introducir valores por 100 g</label>
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={per100Mode}
+                  onChange={(e) => setPer100Mode(e.target.checked)}
+                />
+                <div className="w-10 h-6 bg-bg-secondary border border-glass-border rounded-full peer-checked:bg-accent relative transition">
+                  <div className="absolute top-1 left-1 w-4 h-4 bg-bg-primary rounded-full transition peer-checked:translate-x-4" />
+                </div>
+              </label>
+            </div>
+
+            {/* Siempre: Descripción */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-text-secondary mb-2">Descripción</label>
               <input id="description" name="description" type="text" value={formData.description} onChange={handleChange} required className={baseInputClasses} placeholder="Ej: Pechuga de pollo y arroz" />
             </div>
-            <div>
-              <label htmlFor="calories" className="block text-sm font-medium text-text-secondary mb-2">Calorías (kcal)</label>
-              <input id="calories" name="calories" type="text" inputMode="decimal" value={formData.calories} onChange={handleChange} required className={baseInputClasses} placeholder="Ej: 550" />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                  <label htmlFor="protein_g" className="block text-sm font-medium text-text-secondary mb-2">Proteínas (g)</label>
-                  <input id="protein_g" name="protein_g" type="text" inputMode="decimal" value={formData.protein_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 45" />
-              </div>
-              <div>
-                  <label htmlFor="carbs_g" className="block text-sm font-medium text-text-secondary mb-2">Carbs (g)</label>
-                  <input id="carbs_g" name="carbs_g" type="text" inputMode="decimal" value={formData.carbs_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 60" />
-              </div>
-              <div>
-                  <label htmlFor="fats_g" className="block text-sm font-medium text-text-secondary mb-2">Grasas (g)</label>
-                  <input id="fats_g" name="fats_g" type="text" inputMode="decimal" value={formData.fats_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 15" />
-              </div>
-            </div>
 
-            {/* Campo de Gramos */}
-            <div>
-              <label htmlFor="weight_g" className="block text-sm font-medium text-text-secondary mb-2">Gramos (g)</label>
-              <input 
-                id="weight_g" 
-                name="weight_g" 
-                type="text" 
-                inputMode="decimal" 
-                value={formData.weight_g} 
-                onChange={handleChange} 
-                className={baseInputClasses} 
-                placeholder="Ej: 150" 
-              />
-            </div>
+            {/* Modo normal (directo) */}
+            {!per100Mode && (
+              <>
+                <div>
+                  <label htmlFor="calories" className="block text-sm font-medium text-text-secondary mb-2">Calorías (kcal)</label>
+                  <input id="calories" name="calories" type="text" inputMode="decimal" value={formData.calories} onChange={handleChange} required className={baseInputClasses} placeholder="Ej: 550" />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="protein_g" className="block text-sm font-medium text-text-secondary mb-2">Proteínas (g)</label>
+                    <input id="protein_g" name="protein_g" type="text" inputMode="decimal" value={formData.protein_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 45" />
+                  </div>
+                  <div>
+                    <label htmlFor="carbs_g" className="block text-sm font-medium text-text-secondary mb-2">Carbs (g)</label>
+                    <input id="carbs_g" name="carbs_g" type="text" inputMode="decimal" value={formData.carbs_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 60" />
+                  </div>
+                  <div>
+                    <label htmlFor="fats_g" className="block text-sm font-medium text-text-secondary mb-2">Grasas (g)</label>
+                    <input id="fats_g" name="fats_g" type="text" inputMode="decimal" value={formData.fats_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 15" />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="weight_g" className="block text-sm font-medium text-text-secondary mb-2">Gramos (g)</label>
+                  <input id="weight_g" name="weight_g" type="text" inputMode="decimal" value={formData.weight_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 150" />
+                </div>
+              </>
+            )}
 
-            {/* Sección de favoritos */}
-            <div className="pt-4 border-t border-glass-border">
-              {logToEdit ? (
-                // Cuando se está editando una comida
-                isAlreadyFavorite() ? (
-                  // La comida ya está en favoritos - opción para quitar
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input 
-                        type="checkbox"
-                        checked={removeFromFavorites}
-                        onChange={(e) => setRemoveFromFavorites(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
-                        removeFromFavorites 
-                          ? 'bg-red-500 border-red-500' 
-                          : 'bg-bg-secondary border-glass-border group-hover:border-red-400'
-                      }`}>
-                        {removeFromFavorites && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <HeartOff size={16} className="text-red-500" />
-                    <span className="text-sm font-medium text-text-secondary group-hover:text-text-primary transition-colors">
-                      Quitar esta comida de mis favoritos
-                    </span>
-                  </label>
-                ) : (
-                  // La comida no está en favoritos - opción para agregar
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div className="relative">
-                      <input 
+            {/* Modo por 100 g */}
+            {per100Mode && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="calories100" className="block text-sm font-medium text-text-secondary mb-2">Calorías (kcal) por 100 g</label>
+                    <input id="calories100" name="calories100" type="text" inputMode="decimal" value={per100.calories100} onChange={handleChangePer100} className={baseInputClasses} placeholder="Ej: 150" />
+                  </div>
+                  <div>
+                    <label htmlFor="protein100" className="block text-sm font-medium text-text-secondary mb-2">Proteínas (g) por 100 g</label>
+                    <input id="protein100" name="protein100" type="text" inputMode="decimal" value={per100.protein100} onChange={handleChangePer100} className={baseInputClasses} placeholder="Ej: 12" />
+                  </div>
+                  <div>
+                    <label htmlFor="carbs100" className="block text-sm font-medium text-text-secondary mb-2">Carbs (g) por 100 g</label>
+                    <input id="carbs100" name="carbs100" type="text" inputMode="decimal" value={per100.carbs100} onChange={handleChangePer100} className={baseInputClasses} placeholder="Ej: 20" />
+                  </div>
+                  <div>
+                    <label htmlFor="fats100" className="block text-sm font-medium text-text-secondary mb-2">Grasas (g) por 100 g</label>
+                    <input id="fats100" name="fats100" type="text" inputMode="decimal" value={per100.fats100} onChange={handleChangePer100} className={baseInputClasses} placeholder="Ej: 5" />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="weight_g" className="block text-sm font-medium text-text-secondary mb-2">Gramos que comerás (g)</label>
+                  <input id="weight_g" name="weight_g" type="text" inputMode="decimal" value={formData.weight_g} onChange={handleChange} className={baseInputClasses} placeholder="Ej: 150" />
+                </div>
+
+                {/* Resumen de cálculo */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                  <div className="p-2 rounded-md bg-bg-secondary border border-glass-border text-center">
+                    <p className="text-xs text-text-muted">Calorías</p>
+                    <p className="font-semibold">{formData.calories || 0} kcal</p>
+                  </div>
+                  <div className="p-2 rounded-md bg-bg-secondary border border-glass-border text-center">
+                    <p className="text-xs text-text-muted">Proteínas</p>
+                    <p className="font-semibold">{formData.protein_g || 0} g</p>
+                  </div>
+                  <div className="p-2 rounded-md bg-bg-secondary border border-glass-border text-center">
+                    <p className="text-xs text-text-muted">Carbs</p>
+                    <p className="font-semibold">{formData.carbs_g || 0} g</p>
+                  </div>
+                  <div className="p-2 rounded-md bg-bg-secondary border border-glass-border text-center">
+                    <p className="text-xs text-text-muted">Grasas</p>
+                    <p className="font-semibold">{formData.fats_g || 0} g</p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Opciones de favoritos */}
+            <div className="border border-glass-border rounded-xl p-4 bg-bg-secondary/50">
+              {!logToEdit && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={saveAsFavorite}
+                    onChange={(e) => setSaveAsFavorite(e.target.checked)}
+                    className="w-4 h-4 border-glass-border rounded focus:ring-accent focus:ring-2"
+                    style={{ accentColor: 'var(--color-accent)' }}
+                  />
+                  <span className="text-sm text-text-secondary">Guardar esta comida en favoritos</span>
+                </label>
+              )}
+              
+              {logToEdit && (
+                <>
+                  {!isAlreadyFavorite() && (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
                         type="checkbox"
                         checked={saveAsFavorite}
                         onChange={(e) => setSaveAsFavorite(e.target.checked)}
-                        className="sr-only"
+                        className="w-4 h-4 border-glass-border rounded focus:ring-accent focus:ring-2"
+                        style={{ accentColor: 'var(--color-accent)' }}
                       />
-                      <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
-                        saveAsFavorite 
-                          ? 'bg-accent border-accent' 
-                          : 'bg-bg-secondary border-glass-border group-hover:border-accent/50'
-                      }`}>
-                        {saveAsFavorite && (
-                          <svg className="w-3 h-3 text-bg-secondary" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <Heart size={16} className="text-accent" />
-                    <span className="text-sm font-medium text-text-secondary group-hover:text-text-primary transition-colors">
-                      Guardar esta comida en mis favoritos
-                    </span>
-                  </label>
-                )
-              ) : (
-                // Cuando se está creando una nueva comida (lógica existente)
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input 
-                      type="checkbox"
-                      checked={saveAsFavorite}
-                      onChange={(e) => setSaveAsFavorite(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
-                      saveAsFavorite 
-                        ? 'bg-accent border-accent' 
-                        : 'bg-bg-secondary border-glass-border group-hover:border-accent/50'
-                    }`}>
-                      {saveAsFavorite && (
-                        <svg className="w-3 h-3 text-bg-secondary" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium text-text-secondary group-hover:text-text-primary transition-colors">
-                    Guardar esta comida en mis favoritos
-                  </span>
-                </label>
+                      <span className="text-sm text-text-secondary">Guardar esta comida en favoritos</span>
+                    </label>
+                  )}
+                  
+                  {isAlreadyFavorite() && (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={removeFromFavorites}
+                        onChange={(e) => setRemoveFromFavorites(e.target.checked)}
+                        className="w-4 h-4 border-glass-border rounded focus:ring-accent focus:ring-2"
+                        style={{ accentColor: 'var(--color-accent)' }}
+                      />
+                      <span className="text-sm text-text-secondary">Eliminar de favoritos</span>
+                    </label>
+                  )}
+                </>
               )}
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex items-center justify-center w-full mt-4 py-3 rounded-md bg-accent text-bg-secondary font-semibold transition hover:scale-105 disabled:opacity-70"
-            >
-              {isLoading ? <Spinner /> : 'Guardar'}
-            </button>
+            {/* Botón Guardar */}
+            <div className="mt-6">
+              <button
+                type="submit"
+                className="w-full rounded-xl bg-accent hover:bg-accent/90 text-white font-semibold py-3 transition-colors focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 dark:focus:ring-offset-transparent"
+              >
+                Guardar
+              </button>
+            </div>
           </form>
         )}
-        
+
         {view === 'favorites' && (
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 max-h-[40vh] overflow-y-auto">
-              {favoriteMeals.length > 0 ? (
-                paginatedMeals.map(meal => (
-                  <div key={meal.id} onClick={() => handleSelectFavorite(meal)} className="bg-bg-secondary p-3 rounded-md border border-glass-border group relative cursor-pointer hover:border-accent/50">
-                    <p className="font-semibold pr-8">{meal.name}</p>
-                    <p className="text-sm text-text-secondary">{meal.calories} kcal &bull; {meal.protein_g || 0}g Prot &bull; {meal.carbs_g || 0}g Carbs &bull; {meal.fats_g || 0}g Grasas</p>
-                    <button onClick={(e) => handleDeleteFavorite(meal.id, e)} className="absolute top-1/2 -translate-y-1/2 right-2 p-2 rounded-full bg-bg-primary text-text-muted hover:text-red opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Trash2 size={16}/>
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-text-muted text-center py-8">No tienes comidas guardadas. Puedes añadirlas al registrar una nueva comida en la pestaña "Manual".</p>
-              )}
-            </div>
-            
-            {/* Controles de paginación */}
-            {favoriteMeals.length > itemsPerPage && (
-              <div className="flex items-center justify-between pt-3 border-t border-glass-border">
+          <div className="space-y-3 animate-[fade-in_0.3s]">
+            {favoriteMeals.length === 0 && (
+              <p className="text-sm text-text-secondary text-center">
+                No tienes comidas guardadas aún.
+              </p>
+            )}
+
+            {paginatedMeals.map((meal) => (
+              <div
+                key={meal.id}
+                onClick={() => handleSelectFavorite(meal)}
+                className="flex items-center justify-between p-3 bg-bg-secondary border border-glass-border rounded-md hover:bg-white/5 cursor-pointer"
+              >
+                <div>
+                  <p className="font-semibold text-text-primary">{meal.name}</p>
+                  <p className="text-xs text-text-secondary">
+                    {meal.calories} kcal · P {meal.protein_g} g · C {meal.carbs_g} g · G {meal.fats_g} g
+                  </p>
+                </div>
                 <button
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-1 px-3 py-2 rounded-md bg-bg-secondary border border-glass-border text-sm font-medium text-text-secondary hover:bg-bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-text-secondary hover:text-red-500 p-2"
+                  onClick={(e) => handleDeleteFavorite(meal.id, e)}
+                  aria-label="Eliminar de favoritos"
+                  title="Eliminar de favoritos"
                 >
-                  <ChevronLeft size={16} />
-                  Anterior
+                  <Trash2 size={18} />
                 </button>
-                
-                <span className="text-sm text-text-secondary">
-                  Página {currentPage} de {totalPages} ({favoriteMeals.length} comidas)
-                </span>
-                
+              </div>
+            ))}
+
+            {favoriteMeals.length > 0 && (
+              <div className="flex items-center justify-between pt-2">
                 <button
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 px-3 py-2 rounded-md bg-bg-secondary border border-glass-border text-sm font-medium text-text-secondary hover:bg-bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1 rounded-md border border-glass-border text-text-secondary hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
                 >
-                  Siguiente
-                  <ChevronRight size={16} />
+                  <span className="inline-flex items-center gap-1">
+                    <ChevronLeft size={16} /> Anterior
+                  </span>
+                </button>
+                <span className="text-sm text-text-secondary">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button
+                  className="px-3 py-1 rounded-md border border-glass-border text-text-secondary hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Siguiente <ChevronRight size={16} />
+                  </span>
                 </button>
               </div>
             )}
           </div>
         )}
 
+        {isLoading && (
+          <div className="absolute inset-0 grid place-items-center bg-black/30 rounded-2xl">
+            <Spinner />
+          </div>
+        )}
       </GlassCard>
     </div>
   );

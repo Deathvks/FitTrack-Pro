@@ -1,27 +1,27 @@
 import React from 'react';
-import { X, Palette, Smartphone, Code, Wrench, Sparkles } from 'lucide-react';
+import { X, Palette, Smartphone, Code, Wrench, Sparkles, CheckSquare, Scale } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Palette className="w-6 h-6 text-accent" />,
-      title: "Modales con Fondo Blanco",
-      description: "Mejor contraste y legibilidad en modo claro con fondos blancos sólidos"
+      icon: <Scale className="w-6 h-6 text-accent" />,
+      title: "Cálculo Nutricional por 100g",
+      description: "Nueva funcionalidad para calcular valores nutricionales basados en porciones de 100 gramos"
     },
     {
-      icon: <Smartphone className="w-6 h-6 text-blue-400" />,
-      title: "Experiencia Visual Mejorada",
-      description: "Interfaz más limpia y consistente en todos los modales de la aplicación"
+      icon: <CheckSquare className="w-6 h-6 text-blue-400" />,
+      title: "Checkboxes Mejorados",
+      description: "Checkboxes con colores de acento dinámicos que se adaptan perfectamente a temas claros y oscuros"
     },
     {
       icon: <Code className="w-6 h-6 text-accent" />,
-      title: "Correcciones Técnicas",
-      description: "Resolución de errores JSX y mejor mantenimiento del código"
+      title: "Optimización CSS",
+      description: "Estilos CSS mejorados para elementos de formulario con mejor rendimiento y consistencia"
     },
     {
       icon: <Wrench className="w-6 h-6 text-red-400" />,
-      title: "Compatibilidad con Temas",
-      description: "Mantiene la estética glass en modo oscuro y mejora la claridad en modo claro"
+      title: "Correcciones de UI",
+      description: "Resolución de problemas visuales en controles de formulario y mejor experiencia de usuario"
     }
   ];
 
@@ -41,8 +41,8 @@ const WelcomeModal = ({ onClose }) => {
               <Sparkles className="w-6 h-6 text-accent" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.5.2!</h2>
-              <p className="text-sm text-text-secondary">Mejoras de interfaz de usuario</p>
+              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.6.0!</h2>
+              <p className="text-sm text-text-secondary">Nuevas funciones de nutrición y mejoras de UI</p>
             </div>
           </div>
           <button 
