@@ -3,7 +3,7 @@ import * as authService from '../services/authService';
 import * as userService from '../services/userService';
 import * as routineService from '../services/routineService';
 import * as workoutService from '../services/workoutService';
-import * as bodyWeightService from '../services/bodyWeightService';
+import * as bodyWeightService from '../services/bodyweightService';
 import * as nutritionService from '../services/nutritionService';
 import * as favoriteMealService from '../services/favoriteMealService';
 import * as templateRoutineService from '../services/templateRoutineService';
