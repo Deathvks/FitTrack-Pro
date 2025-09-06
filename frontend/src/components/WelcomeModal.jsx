@@ -1,27 +1,27 @@
 import React from 'react';
-import { X, Palette, Smartphone, Code, Wrench, Sparkles, CheckSquare, Scale } from 'lucide-react';
+import { X, Palette, Smartphone, Code, Wrench, Sparkles, CheckSquare, Scale, Shield, Users } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Scale className="w-6 h-6 text-accent" />,
-      title: "Cálculo Nutricional por 100g",
-      description: "Nueva funcionalidad para calcular valores nutricionales basados en porciones de 100 gramos"
+      icon: <Shield className="w-6 h-6 text-green-400" />,
+      title: "Sistema de Verificación por Email",
+      description: "Nueva funcionalidad de verificación de cuentas por correo electrónico para mayor seguridad"
     },
     {
-      icon: <CheckSquare className="w-6 h-6 text-blue-400" />,
-      title: "Checkboxes Mejorados",
-      description: "Checkboxes con colores de acento dinámicos que se adaptan perfectamente a temas claros y oscuros"
+      icon: <Users className="w-6 h-6 text-blue-400" />,
+      title: "Panel de Administración Mejorado",
+      description: "Vista responsive del panel admin con indicadores de verificación de usuarios y mejor UX móvil"
     },
     {
-      icon: <Code className="w-6 h-6 text-accent" />,
-      title: "Optimización CSS",
-      description: "Estilos CSS mejorados para elementos de formulario con mejor rendimiento y consistencia"
+      icon: <Smartphone className="w-6 h-6 text-accent" />,
+      title: "Diseño Completamente Responsive",
+      description: "Interfaz optimizada para móviles con vistas de tarjetas adaptativas y mejor navegación"
     },
     {
-      icon: <Wrench className="w-6 h-6 text-red-400" />,
-      title: "Correcciones de UI",
-      description: "Resolución de problemas visuales en controles de formulario y mejor experiencia de usuario"
+      icon: <Code className="w-6 h-6 text-purple-400" />,
+      title: "Optimizaciones de Backend",
+      description: "Migraciones automáticas de base de datos y mejoras en la gestión de usuarios verificados"
     }
   ];
 
@@ -41,8 +41,8 @@ const WelcomeModal = ({ onClose }) => {
               <Sparkles className="w-6 h-6 text-accent" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.6.1!</h2>
-              <p className="text-sm text-text-secondary">Nuevas funciones de nutrición y mejoras de UI</p>
+              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.7.0!</h2>
+              <p className="text-sm text-text-secondary">Verificación por email y mejoras de administración</p>
             </div>
           </div>
           <button 
