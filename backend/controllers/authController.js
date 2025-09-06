@@ -56,12 +56,12 @@ export const register = async (req, res, next) => {
     const { name, email, password } = req.body;
     
     // Verificar si el email ya existe
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ error: 'El email ya está registrado' });
+    let existingUser = await User.findOne({ where: { email } });
+    if (existingUser && existingUser.is_verified) {
+      return res.status(400).json({ error: 'El email ya está registrado y verificado' });
     }
     
-    // Generar y enviar código
+    // Generar código de verificación
     const verificationCode = generateVerificationCode();
     const emailResult = await sendVerificationEmail(email, verificationCode);
     
@@ -69,12 +69,30 @@ export const register = async (req, res, next) => {
       return res.status(500).json({ error: 'Error enviando código de verificación' });
     }
     
-    // Guardar código temporalmente (expira en 10 minutos)
-    verificationCodes.set(email, {
-      code: verificationCode,
-      userData: { name, email, password },
-      expires: Date.now() + 10 * 60 * 1000 // 10 minutos
-    });
+    // Hash de la contraseña
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+    
+    if (existingUser) {
+      // Actualizar usuario existente no verificado
+      await existingUser.update({
+        name,
+        password_hash,
+        verification_code: verificationCode,
+        verification_code_expires_at: new Date(Date.now() + 10 * 60 * 1000),
+        is_verified: false
+      });
+    } else {
+      // Crear nuevo usuario no verificado
+      await User.create({
+        name,
+        email,
+        password_hash,
+        verification_code: verificationCode,
+        verification_code_expires_at: new Date(Date.now() + 10 * 60 * 1000),
+        is_verified: false
+      });
+    }
     
     res.status(200).json({ 
       message: 'Código de verificación enviado al email',
@@ -87,7 +105,7 @@ export const register = async (req, res, next) => {
   }
 };
 
-// Verificar código y crear o actualizar usuario
+// Verificar código y marcar usuario como verificado
 export const verifyEmail = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -97,68 +115,49 @@ export const verifyEmail = async (req, res, next) => {
   try {
     const { email, code } = req.body;
     
-    const storedData = verificationCodes.get(email);
+    // Buscar usuario en la base de datos
+    const user = await User.findOne({ where: { email } });
     
-    if (!storedData) {
+    if (!user) {
+      return res.status(400).json({ error: 'Usuario no encontrado' });
+    }
+    
+    if (!user.verification_code) {
       return res.status(400).json({ error: 'Código no encontrado o expirado' });
     }
     
-    if (Date.now() > storedData.expires) {
-      verificationCodes.delete(email);
+    if (new Date() > user.verification_code_expires_at) {
+      await user.update({ 
+        verification_code: null, 
+        verification_code_expires_at: null 
+      });
       return res.status(400).json({ error: 'Código expirado' });
     }
     
-    if (storedData.code !== code) {
+    if (user.verification_code !== code) {
       return res.status(400).json({ error: 'Código incorrecto' });
     }
     
-    // Limpiar código usado
-    verificationCodes.delete(email);
-
-    // Si hay userData, es un registro nuevo
-    if (storedData.userData) {
-      const { name, password } = storedData.userData;
-      const salt = await bcrypt.genSalt(10);
-      const password_hash = await bcrypt.hash(password, salt);
-      
-      const user = await User.create({
-        name,
-        email,
-        password_hash,
-        is_verified: true // Marcar como verificado al crear
-      });
-      
-      const payload = { userId: user.id, role: user.role };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-      
-      return res.status(201).json({
-        message: 'Usuario registrado y verificado exitosamente',
-        token,
-        user: { id: user.id, name: user.name, email: user.email }
-      });
-    } else {
-      // Si no hay userData, es una verificación de un usuario existente
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-          return res.status(404).json({ error: 'Usuario no encontrado' });
+    // Marcar como verificado y limpiar código
+    await user.update({
+      is_verified: true,
+      verification_code: null,
+      verification_code_expires_at: null
+    });
+    
+    const payload = { userId: user.id, role: user.role };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+    
+    return res.status(200).json({
+      message: 'Email verificado exitosamente',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        is_verified: user.is_verified
       }
-
-      await user.update({ is_verified: true });
-
-      const payload = { userId: user.id, role: user.role };
-      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
-
-      return res.status(200).json({
-          message: 'Email verificado exitosamente',
-          token,
-          user: {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              is_verified: user.is_verified
-          }
-      });
-    }
+    });
     
   } catch (error) {
     console.error('Error verificando email:', error);
@@ -166,62 +165,41 @@ export const verifyEmail = async (req, res, next) => {
   }
 };
 
-// Mantener la función original para compatibilidad
-export const registerUser = register;
-
 // Reenviar código de verificación
 export const resendVerificationEmail = async (req, res, next) => {
   const { email } = req.body;
   
   console.log('Email recibido para reenvío:', email);
-  console.log('Códigos temporales disponibles:', Array.from(verificationCodes.keys()));
 
   try {
-    // Primero buscar en usuarios ya creados
-    let user = await User.findOne({ where: { email } });
+    // Buscar usuario en la base de datos
+    const user = await User.findOne({ where: { email } });
     
-    if (user) {
-      // Usuario existe en BD pero no verificado
-      if (user.is_verified) {
-        return res.status(400).json({ error: 'La cuenta ya está verificada.' });
-      }
-
-      const verificationCode = generateVerificationCode();
-      
-      await user.update({
-        verification_code: verificationCode,
-        verification_code_expires_at: new Date(Date.now() + 10 * 60 * 1000)
-      });
-      
-      await sendVerificationEmail(email, verificationCode);
-    } else {
-      // Buscar en códigos temporales (usuarios en proceso de registro)
-      const tempData = verificationCodes.get(email);
-      
-      if (!tempData) {
-        return res.status(404).json({ error: 'Usuario no encontrado. Por favor, regístrate nuevamente.' });
-      }
-      
-      // Verificar si el código temporal no ha expirado
-      if (Date.now() > tempData.expires) {
-        verificationCodes.delete(email);
-        return res.status(400).json({ error: 'El código ha expirado. Por favor, regístrate nuevamente.' });
-      }
-      
-      // Generar nuevo código y actualizar datos temporales
-      const verificationCode = generateVerificationCode();
-      
-      verificationCodes.set(email, {
-        ...tempData,
-        code: verificationCode,
-        expires: Date.now() + 10 * 60 * 1000
-      });
-      
-      await sendVerificationEmail(email, verificationCode);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado. Por favor, regístrate nuevamente.' });
     }
+    
+    if (user.is_verified) {
+      return res.status(400).json({ error: 'La cuenta ya está verificada.' });
+    }
+    
+    // Generar nuevo código
+    const verificationCode = generateVerificationCode();
+    const emailResult = await sendVerificationEmail(email, verificationCode);
+    
+    if (!emailResult.success) {
+      return res.status(500).json({ error: 'Error enviando código de verificación' });
+    }
+    
+    // Actualizar código en la base de datos
+    await user.update({
+      verification_code: verificationCode,
+      verification_code_expires_at: new Date(Date.now() + 10 * 60 * 1000)
+    });
     
     res.json({ message: 'Código de verificación reenviado.' });
   } catch (error) {
+    console.error('Error reenviando código:', error);
     next(error);
   }
 };
