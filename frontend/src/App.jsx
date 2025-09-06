@@ -18,6 +18,8 @@ import PRToast from './components/PRToast';
 import ConfirmationModal from './components/ConfirmationModal';
 import WelcomeModal from './components/WelcomeModal'; // Nuevo import
 import AdminPanel from './pages/AdminPanel.jsx';
+import EmailVerificationModal from './components/EmailVerificationModal';
+import EmailVerification from './components/EmailVerification';
 
 export default function App() {
   const {
@@ -54,6 +56,9 @@ export default function App() {
   }, [view]);
 
   const [isLoginView, setIsLoginView] = useState(true);
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
+  const [showCodeVerificationModal, setShowCodeVerificationModal] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
 
   const [theme, setThemeState] = useState(() => localStorage.getItem('theme') || 'system');
   const [accent, setAccentState] = useState(() => localStorage.getItem('accent') || 'green');
@@ -112,6 +117,13 @@ export default function App() {
     toRemove.forEach(c => document.body.classList.remove(c));
     document.body.classList.add(`accent-${accent}`);
   }, [accent]);
+
+  useEffect(() => {
+    if (isAuthenticated && userProfile && !userProfile.is_verified) {
+      setShowEmailVerificationModal(true);
+      setVerificationEmail(userProfile.email);
+    }
+  }, [isAuthenticated, userProfile]);
 
   // MOVER ESTE useEffect AQUÍ - ANTES de los returns condicionales
   useEffect(() => {
@@ -267,6 +279,37 @@ export default function App() {
       <div className="hidden md:block absolute bottom-4 right-4 z-50 bg-bg-secondary/50 text-text-muted text-xs px-2.5 py-1 rounded-full backdrop-blur-sm select-none">
         v{APP_VERSION}
       </div>
+      {showEmailVerificationModal && userProfile && (
+        <EmailVerificationModal
+          currentEmail={verificationEmail}
+          onEmailUpdated={(newEmail) => {
+            setVerificationEmail(newEmail);
+            setShowEmailVerificationModal(false);
+            setShowCodeVerificationModal(true);
+          }}
+          onCodeSent={() => {
+            setShowEmailVerificationModal(false);
+            setShowCodeVerificationModal(true);
+          }}
+        />
+      )}
+
+      {showCodeVerificationModal && (
+        <EmailVerification
+          email={verificationEmail}
+          onSuccess={() => {
+            setShowCodeVerificationModal(false);
+            fetchInitialData(); // Recargar datos para que is_verified se actualice
+          }}
+          onBack={() => {
+            setShowCodeVerificationModal(false);
+            setShowEmailVerificationModal(true);
+          }}
+          backButtonText="Volver"
+        />
+      )}
     </div>
   );
 }
+
+// Add this useEffect INSIDE the component

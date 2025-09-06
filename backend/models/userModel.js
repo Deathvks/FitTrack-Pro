@@ -22,13 +22,11 @@ const User = sequelize.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    // --- INICIO DE LA MODIFICACIÓN ---
     role: {
       type: DataTypes.ENUM('user', 'admin'),
       allowNull: false,
       defaultValue: 'user',
     },
-    // --- FIN DE LA MODIFICACIÓN ---
     gender: {
       type: DataTypes.ENUM('male', 'female', 'other'),
       allowNull: true,
@@ -47,6 +45,20 @@ const User = sequelize.define(
     },
     goal: {
       type: DataTypes.ENUM('lose', 'maintain', 'gain'),
+      allowNull: true,
+    },
+    is_verified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    // Agregar campos para verificación de email
+    verification_code: {
+      type: DataTypes.STRING(6),
+      allowNull: true,
+    },
+    verification_code_expires_at: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
   },

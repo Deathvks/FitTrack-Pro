@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Edit, Trash2, Plus } from 'lucide-react';
+import { ChevronLeft, Edit, Trash2, Plus, CheckCircle, XCircle } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import Spinner from '../components/Spinner';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -31,11 +31,11 @@ const AdminPanel = ({ onCancel }) => {
     fetchUsers();
   }, [addToast]);
 
-  const handleSaveUser = async (userId, userData) => {
+  const handleSaveUser = async (userData) => {
     setIsUpdating(true);
     try {
-      const updatedUser = await updateUser(userId, userData);
-      setUsers(users.map(u => u.id === userId ? updatedUser : u));
+      const updatedUser = await updateUser(userToEdit.id, userData);
+      setUsers(users.map(u => u.id === userToEdit.id ? updatedUser : u));
       addToast('Usuario actualizado con éxito.', 'success');
       setUserToEdit(null);
     } catch (error) {
@@ -44,7 +44,7 @@ const AdminPanel = ({ onCancel }) => {
       setIsUpdating(false);
     }
   };
-  
+
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
     setIsUpdating(true);
@@ -75,7 +75,7 @@ const AdminPanel = ({ onCancel }) => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 animate-[fade-in_0.5s_ease-out]">
+    <div className="w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 animate-[fade-in_0.5s_ease-out]">
       <button onClick={onCancel} className="flex items-center gap-2 text-text-secondary font-semibold hover:text-text-primary transition mb-4">
         <ChevronLeft size={20} />
         Volver a Ajustes
@@ -97,37 +97,104 @@ const AdminPanel = ({ onCancel }) => {
         {isLoading ? (
           <div className="flex justify-center items-center py-10"><Spinner /></div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left table-fixed">
-              <thead className="border-b border-glass-border">
-                <tr>
-                  <th className="p-3 w-3/12">Nombre</th>
-                  <th className="p-3 w-4/12 hidden sm:table-cell">Email</th>
-                  <th className="p-3 w-2/12 text-center">Rol</th>
-                  <th className="p-3 w-3/12 text-center">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map(user => (
-                  <tr key={user.id} className="border-b border-glass-border last:border-b-0">
-                    <td className="p-3 font-semibold align-middle truncate">{user.name}</td>
-                    <td className="p-3 text-text-secondary hidden sm:table-cell align-middle truncate">{user.email}</td>
-                    <td className="p-3 align-middle text-center">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-bold rounded-full capitalize ${user.role === 'admin' ? 'bg-accent-transparent text-accent' : 'bg-bg-secondary text-text-secondary'}`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="p-3 align-middle text-center">
-                      <div className="flex justify-center gap-2">
-                        <button onClick={() => setUserToEdit(user)} className="p-2 text-text-secondary hover:text-accent transition"><Edit size={16} /></button>
-                        <button onClick={() => setUserToDelete(user)} className="p-2 text-text-secondary hover:text-red transition"><Trash2 size={16} /></button>
-                      </div>
-                    </td>
+          <>
+            {/* Vista de tabla para pantallas medianas y grandes */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="border-b border-glass-border">
+                  <tr>
+                    <th className="p-3">Nombre</th>
+                    <th className="p-3">Email</th>
+                    <th className="p-3 text-center">Rol</th>
+                    <th className="p-3 text-center">Verificado</th>
+                    <th className="p-3 text-center">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {users.map(user => (
+                    <tr key={user.id} className="border-b border-glass-border last:border-b-0">
+                      <td className="p-3 font-semibold align-middle">{user.name}</td>
+                      <td className="p-3 text-text-secondary align-middle">{user.email}</td>
+                      <td className="p-3 align-middle text-center">
+                        <span className={`inline-flex items-center px-2 py-1 text-xs font-bold rounded-full capitalize ${user.role === 'admin' ? 'bg-accent-transparent text-accent' : 'bg-bg-secondary text-text-secondary'}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="p-3 align-middle text-center">
+                        <div className="flex justify-center items-center">
+                          {user.is_verified ? (
+                            <div className="flex items-center gap-1 text-green-500">
+                              <CheckCircle size={16} />
+                              <span className="text-xs font-medium">Sí</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 text-red-500">
+                              <XCircle size={16} />
+                              <span className="text-xs font-medium">No</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-3 align-middle text-center">
+                        <div className="flex justify-center gap-2">
+                          <button onClick={() => setUserToEdit(user)} className="p-2 text-text-secondary hover:text-accent transition"><Edit size={16} /></button>
+                          <button onClick={() => setUserToDelete(user)} className="p-2 text-text-secondary hover:text-red transition"><Trash2 size={16} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Vista de tarjetas para pantallas pequeñas */}
+            <div className="md:hidden space-y-4">
+              {users.map(user => (
+                <div key={user.id} className="bg-glass-light border border-glass-border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{user.name}</h3>
+                      <p className="text-text-secondary text-sm truncate">{user.email}</p>
+                    </div>
+                    <div className="flex gap-2 ml-2">
+                      <button onClick={() => setUserToEdit(user)} className="p-2 text-text-secondary hover:text-accent transition">
+                        <Edit size={16} />
+                      </button>
+                      <button onClick={() => setUserToDelete(user)} className="p-2 text-text-secondary hover:text-red transition">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-text-secondary">Rol:</span>
+                        <span className={`inline-flex items-center px-2 py-1 text-xs font-bold rounded-full capitalize ${user.role === 'admin' ? 'bg-accent-transparent text-accent' : 'bg-bg-secondary text-text-secondary'}`}>
+                          {user.role}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-text-secondary">Verificado:</span>
+                        {user.is_verified ? (
+                          <div className="flex items-center gap-1 text-green-500">
+                            <CheckCircle size={14} />
+                            <span className="text-xs font-medium">Sí</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-red-500">
+                            <XCircle size={14} />
+                            <span className="text-xs font-medium">No</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </GlassCard>
       
