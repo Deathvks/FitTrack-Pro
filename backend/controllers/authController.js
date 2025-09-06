@@ -105,6 +105,9 @@ export const register = async (req, res, next) => {
   }
 };
 
+// Mantener la función original para compatibilidad
+export const registerUser = register;
+
 // Verificar código y marcar usuario como verificado
 export const verifyEmail = async (req, res, next) => {
   const errors = validationResult(req);
