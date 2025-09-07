@@ -13,6 +13,7 @@ import PersonalRecord from './personalRecordModel.js';
 import NutritionLog from './nutritionLogModel.js';
 import WaterLog from './waterLogModel.js';
 import FavoriteMeal from './favoriteMealModel.js';
+import CreatinaLog from './creatinaLogModel.js';
 // --- INICIO DE LA MODIFICACIÓN ---
 import TemplateRoutine from './templateRoutineModel.js';
 import TemplateRoutineExercise from './templateRoutineExerciseModel.js';
@@ -60,6 +61,9 @@ TemplateRoutineExercise.belongsTo(TemplateRoutine, { foreignKey: 'template_routi
 // --- FIN DE LA MODIFICACIÓN ---
 
 // 3. Exporta un único objeto que contiene todos los modelos
+// Definir asociaciones
+User.hasMany(CreatinaLog, { foreignKey: 'user_id', as: 'creatinaLogs' });
+CreatinaLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 const models = {
     sequelize,
     User,
@@ -78,6 +82,7 @@ const models = {
     TemplateRoutine,
     TemplateRoutineExercise,
     // --- FIN DE LA MODIFICACIÓN ---
+    CreatinaLog
 };
 
 export default models;

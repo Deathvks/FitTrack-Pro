@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Droplet, Flame, Beef, Wheat, Salad, Edit, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Droplet, Flame, Beef, Wheat, Salad, Edit, Trash2, Zap } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import StatCard from '../components/StatCard';
 import Spinner from '../components/Spinner';
@@ -7,6 +7,7 @@ import useAppStore from '../store/useAppStore';
 import WaterLogModal from '../components/WaterLogModal';
 import NutritionLogModal from '../components/NutritionLogModal';
 import ConfirmationModal from '../components/ConfirmationModal';
+import CreatinaTracker from '../components/CreatinaTracker';
 import { useToast } from '../hooks/useToast';
 import * as nutritionService from '../services/nutritionService';
 
@@ -66,6 +67,7 @@ const Nutrition = () => {
     const [modal, setModal] = useState({ type: null, data: null });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [logToDelete, setLogToDelete] = useState(null);
+    const [showCreatinaTracker, setShowCreatinaTracker] = useState(false);
 
     const latestWeight = useMemo(() => {
         if (!bodyWeightLog || bodyWeightLog.length === 0) return userProfile?.weight || null;
@@ -91,13 +93,10 @@ const Nutrition = () => {
         return Math.round(latestWeight * multiplier);
     }, [latestWeight, userProfile]);
     
-    // --- INICIO DE LA MODIFICACIÓN ---
-    // Se establece un objetivo de agua, por ejemplo, 35ml por kg de peso corporal.
     const waterTarget = useMemo(() => {
         if (!latestWeight) return 2500;
         return Math.round(latestWeight * 35);
     }, [latestWeight]);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleSaveWater = async (quantity_ml) => {
         setIsSubmitting(true);
@@ -178,11 +177,10 @@ const Nutrition = () => {
                  <div className="flex justify-center items-center py-10"><Spinner size={40}/></div>
             ) : (
             <>
-                {/* --- INICIO DE LA MODIFICACIÓN RESPONSIVE --- */}
+                {/* Sección de Resumen y Suplementos */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
                     <GlassCard className="lg:col-span-3 p-6">
                          <h3 className="text-xl font-bold mb-4">Resumen del Día</h3>
-                         {/* El grid ahora es de 1 columna en móvil y 2 en pantallas más grandes */}
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <StatCard icon={<Flame size={24} />} title="Calorías" value={totals.calories.toLocaleString('es-ES')} unit={`/ ${calorieTarget.toLocaleString('es-ES')} kcal`} />
                             <StatCard icon={<Beef size={24} />} title="Proteínas" value={totals.protein.toFixed(1)} unit={`/ ${proteinTarget} g`} />
@@ -190,20 +188,42 @@ const Nutrition = () => {
                             <StatCard icon={<Salad size={24} />} title="Grasas" value={totals.fats.toFixed(1)} unit="g" />
                          </div>
                     </GlassCard>
-                    <GlassCard className="lg:col-span-2 p-6 flex flex-col justify-between">
-                        <h3 className="text-xl font-bold">Agua</h3>
-                        <div className="flex items-center justify-center gap-4 my-4">
-                            <Droplet size={32} className="text-blue-400" />
-                            <p className="text-4xl font-bold">{waterLog.quantity_ml}<span className="text-base font-medium text-text-muted"> / {waterTarget} ml</span></p>
-                        </div>
-                         <button onClick={() => setModal({ type: 'water', data: null })} className="flex items-center justify-center gap-2 w-full rounded-md bg-accent/10 text-accent font-semibold py-3 border border-accent/20 hover:bg-accent/20 transition-colors">
-                            <Plus size={20} />
-                            <span>Añadir / Editar Agua</span>
-                        </button>
-                    </GlassCard>
+                    
+                    {/* Sección de Suplementos */}
+                    <div className="lg:col-span-2 space-y-4">
+                        {/* Agua */}
+                        <GlassCard className="p-6 flex flex-col justify-between">
+                            <h3 className="text-xl font-bold">Agua</h3>
+                            <div className="flex items-center justify-center gap-4 my-4">
+                                <Droplet size={32} className="text-blue-400" />
+                                <p className="text-4xl font-bold">{waterLog.quantity_ml}<span className="text-base font-medium text-text-muted"> / {waterTarget} ml</span></p>
+                            </div>
+                             <button onClick={() => setModal({ type: 'water', data: null })} className="flex items-center justify-center gap-2 w-full rounded-md bg-accent/10 text-accent font-semibold py-3 border border-accent/20 hover:bg-accent/20 transition-colors">
+                                <Plus size={20} />
+                                <span>Añadir / Editar Agua</span>
+                            </button>
+                        </GlassCard>
+                        
+                        {/* Creatina */}
+                        <GlassCard className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-bold flex items-center gap-2">
+                                    <Zap size={24} className="text-accent" />
+                                    Creatina
+                                </h3>
+                            </div>
+                            <button 
+                                onClick={() => setShowCreatinaTracker(true)} 
+                                className="flex items-center justify-center gap-2 w-full rounded-md bg-accent/10 text-accent font-semibold py-3 border border-accent/20 hover:bg-accent/20 transition-colors"
+                            >
+                                <Zap size={20} />
+                                <span>Gestionar Creatina</span>
+                            </button>
+                        </GlassCard>
+                    </div>
                 </div>
-                {/* --- FIN DE LA MODIFICACIÓN RESPONSIVE --- */}
 
+                {/* Sección de Comidas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {Object.entries(meals).map(([mealType, logs]) => (
                         <GlassCard key={mealType} className="p-6">
@@ -216,7 +236,6 @@ const Nutrition = () => {
                             <div className="flex flex-col gap-3">
                                 {logs.length > 0 ? logs.map(log => (
                                     <div key={log.id} className="bg-bg-secondary p-3 rounded-md border border-glass-border group relative">
-                                        {/* Contenido principal con espacio para botones en móvil */}
                                         <div className="pr-20 sm:pr-16">
                                             <p className="font-semibold">
                                                 {log.description}
@@ -227,7 +246,6 @@ const Nutrition = () => {
                                             </p>
                                         </div>
                                         
-                                        {/* Botones siempre visibles y responsivos */}
                                         <div className="absolute top-1/2 -translate-y-1/2 right-2 flex flex-col sm:flex-row gap-1 sm:gap-1">
                                             <button 
                                                 onClick={() => setModal({ type: 'food', data: { ...log, mealType } })} 
@@ -281,6 +299,13 @@ const Nutrition = () => {
                     onCancel={() => setLogToDelete(null)}
                     isLoading={isSubmitting}
                     confirmText="Eliminar"
+                />
+            )}
+            
+            {showCreatinaTracker && (
+                <CreatinaTracker 
+                    onClose={() => setShowCreatinaTracker(false)}
+                    selectedDate={selectedDate}
                 />
             )}
         </div>

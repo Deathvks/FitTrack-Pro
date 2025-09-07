@@ -36,11 +36,15 @@ export const logWorkoutSession = async (req, res, next) => {
   const t = await sequelize.transaction();
 
   try {
+    // Crear fecha local sin zona horaria para evitar problemas de conversión
+    const today = new Date();
+    const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
     const newWorkoutLog = await WorkoutLog.create({
       user_id: userId,
       routine_name: routineName,
       routine_id: routineId,
-      workout_date: new Date(),
+      workout_date: localDate,
       duration_seconds,
       calories_burned,
       notes

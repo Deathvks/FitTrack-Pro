@@ -32,7 +32,7 @@ const WaterLogModal = ({ initialQuantity = 0, onSave, onClose, isLoading }) => {
       onClick={onClose}
     >
       <div
-        className="relative w-11/12 max-w-sm p-8 m-4 text-center mx-auto rounded-2xl border backdrop-blur-md bg-white/95 border-black/10 dark:bg-glass-bg dark:border-glass-border"
+        className="relative w-11/12 max-w-sm p-8 m-4 text-center mx-auto rounded-2xl border backdrop-blur-md bg-bg-secondary border-glass-border"
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition">

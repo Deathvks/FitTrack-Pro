@@ -37,6 +37,7 @@ const apiClient = async (endpoint, options = {}) => {
             }
 
             let errorMessage = 'Ha ocurrido un error inesperado.';
+            
             try {
                 const errorData = await response.json();
                 // Priorizamos el mensaje de error específico de nuestra API
@@ -46,11 +47,13 @@ const apiClient = async (endpoint, options = {}) => {
                 } else if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
                     errorMessage = errorData.errors[0].msg;
                 }
-            } catch (e) {
-                // Si el cuerpo del error no es JSON, usamos el texto de estado (ej: "Not Found")
-                errorMessage = response.statusText || 'Error del servidor.';
+            } catch (parseError) {
+                // Si no podemos parsear la respuesta, usar mensaje por defecto según status
+                if (response.status === 404) {
+                    errorMessage = 'Recurso no encontrado';
+                }
             }
-            // Lanzamos el error con el mensaje procesado para que sea capturado por el componente.
+            
             throw new Error(errorMessage);
         }
 

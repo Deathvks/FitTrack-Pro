@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import creatinaRoutes from './routes/creatina.js';
 
 dotenv.config();
 
@@ -54,6 +55,8 @@ app.use('/api', nutritionRoutes);
 app.use('/api', favoriteMealRoutes);
 // --- INICIO DE LA MODIFICACIÓN ---
 app.use('/api', templateRoutineRoutes); // Se usan las nuevas rutas
+// ... Rutas
+app.use('/api/creatina', creatinaRoutes);
 // --- FIN DE LA MODIFICACIÓN ---
 
 

@@ -9,9 +9,11 @@ const CalendarView = ({ setDetailedLog }) => {
 
     const workoutsByDate = useMemo(() => {
         return workoutLog.reduce((acc, log) => {
-            const dateStr = new Date(log.workout_date).toISOString().split('T')[0];
-            if (!acc[dateStr]) { acc[dateStr] = []; }
-            acc[dateStr].push(log);
+            // Usar fecha local en lugar de UTC para evitar cambios de día
+            const date = new Date(log.workout_date);
+            const localDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            if (!acc[localDateStr]) { acc[localDateStr] = []; }
+            acc[localDateStr].push(log);
             return acc;
         }, {});
     }, [workoutLog]);
@@ -37,7 +39,9 @@ const CalendarView = ({ setDetailedLog }) => {
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = new Date(year, month, day).toISOString().split('T')[0];
+        // Usar fecha local consistente en lugar de toISOString()
+        const date = new Date(year, month, day);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         const hasWorkout = !!workoutsByDate[dateStr];
         days.push(
             <button
