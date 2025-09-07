@@ -4,25 +4,20 @@ import { X, Palette, Smartphone, Zap, Sparkles, Shield, Users } from 'lucide-rea
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Zap className="w-6 h-6 text-purple-400" />,
-      title: "Nuevo Seguimiento de Creatina",
-      description: "Ahora puedes registrar y seguir tu consumo diario de creatina desde la sección de Nutrición."
+      icon: <Palette className="w-6 h-6 text-rose-400" />,
+      title: "Más Colores de Acento",
+      description: "Personaliza aún más tu experiencia eligiendo entre nuevos colores para la interfaz en los ajustes."
     },
     {
-      icon: <Shield className="w-6 h-6 text-green-400" />,
-      title: "Verificación de Email Mejorada",
-      description: "Se ha corregido el flujo de verificación para que sea más intuitivo y funcione a la primera."
+      icon: <Zap className="w-6 h-6 text-purple-400" />,
+      title: "Seguimiento de Creatina Mejorado",
+      description: "Ahora puedes añadir hasta dos tomas diarias y la interfaz es más limpia y fácil de usar."
     },
     {
       icon: <Smartphone className="w-6 h-6 text-accent" />,
-      title: "Interfaz Más Pulida y Responsive",
-      description: "Se han mejorado varios componentes visuales para que se adapten mejor a cualquier tamaño de pantalla."
+      title: "Mejoras de Interfaz",
+      description: "Hemos pulido varios componentes, como este mismo modal, para que se vean y funcionen mejor en todos los dispositivos."
     },
-    {
-      icon: <Users className="w-6 h-6 text-blue-400" />,
-      title: "Mejoras de Administración",
-      description: "La gestión de usuarios ahora es más robusta y segura para los administradores."
-    }
   ];
 
   return (
@@ -42,8 +37,8 @@ const WelcomeModal = ({ onClose }) => {
                 <Sparkles className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.8.0!</h2>
-                <p className="text-sm text-text-secondary">Seguimiento de creatina y más mejoras</p>
+                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.9.0!</h2>
+                <p className="text-sm text-text-secondary">Nuevos colores y más mejoras</p>
               </div>
             </div>
             <button 
@@ -78,7 +73,7 @@ const WelcomeModal = ({ onClose }) => {
             onClick={onClose}
             className="w-full px-6 py-3 rounded-xl font-semibold bg-accent text-white hover:bg-accent/90 transition-colors"
           >
-            ¡Entendido!
+            ¡Genial!
           </button>
         </div>
       </div>
