@@ -1,31 +1,31 @@
 import React from 'react';
-import { X, Compass, UserCog, Sparkles } from 'lucide-react';
+import { X, Sparkles, Utensils, Weight, CheckSquare } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Compass className="w-6 h-6 text-accent" />,
-      title: "Explora Rutinas Predefinidas",
-      description: "Descubre entrenamientos creados por expertos en la nueva pestaña 'Explorar' y añádelos a tu perfil con un solo clic."
+      icon: <Utensils className="w-6 h-6 text-accent" />,
+      title: "Precisión en Tus Comidas Favoritas",
+      description: "Ahora puedes guardar los gramos exactos de tus comidas favoritas para un registro nutricional más rápido y preciso."
     },
     {
-      icon: <UserCog className="w-6 h-6 text-purple-400" />,
-      title: "Gestión de Cuenta Mejorada",
-      description: "Ahora puedes actualizar tu email y cambiar tu contraseña de forma segura desde la nueva sección en 'Ajustes'."
+      icon: <CheckSquare className="w-6 h-6 text-purple-400" />,
+      title: "Correcciones en Formularios",
+      description: "Hemos mejorado la validación y el comportamiento en los modales de calorías y login para una experiencia más fluida."
     },
     {
-      icon: <Sparkles className="w-6 h-6 text-amber-400" />,
-      title: "Recálculo Inteligente de Récords",
-      description: "Al eliminar un entrenamiento, tus récords personales (PRs) se recalcularán para mantener tus datos siempre precisos."
+      icon: <Weight className="w-6 h-6 text-amber-400" />,
+      title: "Mejoras de Calidad de Vida",
+      description: "Se han pulido varios aspectos de la interfaz, como la alineación de notificaciones y la responsividad de los componentes."
     },
   ];
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-bg-primary rounded-2xl shadow-xl m-4 w-full max-w-md flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -38,10 +38,10 @@ const WelcomeModal = ({ onClose }) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.9.3!</h2>
-                <p className="text-sm text-text-secondary">Nuevas funciones y mejoras de calidad</p>
+                <p className="text-sm text-text-secondary">Mejoras de nutrición y correcciones</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={onClose}
               className="p-2 rounded-full hover:bg-bg-secondary transition-colors"
             >
@@ -53,7 +53,7 @@ const WelcomeModal = ({ onClose }) => {
         {/* Features List (Scrollable) */}
         <div className="overflow-y-auto px-6 space-y-3">
           {features.map((feature, index) => (
-            <div key={index} className="flex items-start gap-3 p-4 rounded-xl 
+            <div key={index} className="flex items-start gap-3 p-4 rounded-xl
                                         bg-bg-secondary hover:bg-bg-tertiary
                                         transition-colors duration-200">
               <div className="flex-shrink-0 mt-0.5">
@@ -69,11 +69,11 @@ const WelcomeModal = ({ onClose }) => {
 
         {/* Action Button */}
         <div className="p-6 pt-4 flex-shrink-0">
-          <button 
+          <button
             onClick={onClose}
             className="w-full px-6 py-3 rounded-xl font-semibold bg-accent text-white hover:bg-accent/90 transition-colors"
           >
-            Explorar Novedades
+            ¡Entendido!
           </button>
         </div>
       </div>
