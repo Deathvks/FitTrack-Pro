@@ -88,12 +88,49 @@ body.accent-rose {
   --color-accent-border: rgba(244, 63, 94, 0.28);
 }
 
-/* TEAL (por si quieres algo entre azul y verde) */
+/* TEAL */
 body.accent-teal {
   --color-accent: #14b8a6;
   --color-accent-transparent: rgba(20, 184, 166, 0.12);
   --color-accent-border: rgba(20, 184, 166, 0.28);
 }
+
+/* CYAN */
+body.accent-cyan {
+  --color-accent: #06b6d4;
+  --color-accent-transparent: rgba(6, 182, 212, 0.12);
+  --color-accent-border: rgba(6, 182, 212, 0.28);
+}
+
+/* ORANGE */
+body.accent-orange {
+  --color-accent: #f97316;
+  --color-accent-transparent: rgba(249, 115, 22, 0.12);
+  --color-accent-border: rgba(249, 115, 22, 0.28);
+}
+
+/* --- INICIO DE LA MODIFICACIÓN --- */
+/* LIME */
+body.accent-lime {
+  --color-accent: #84cc16;
+  --color-accent-transparent: rgba(132, 204, 22, 0.12);
+  --color-accent-border: rgba(132, 204, 22, 0.28);
+}
+
+/* FUCHSIA */
+body.accent-fuchsia {
+  --color-accent: #d946ef;
+  --color-accent-transparent: rgba(217, 70, 239, 0.12);
+  --color-accent-border: rgba(217, 70, 239, 0.28);
+}
+
+/* EMERALD */
+body.accent-emerald {
+  --color-accent: #10b981;
+  --color-accent-transparent: rgba(16, 185, 129, 0.12);
+  --color-accent-border: rgba(16, 185, 129, 0.28);
+}
+/* --- FIN DE LA MODIFICACIÓN --- */
 
 /* 5) COMPONENTES BASE */
 @layer components {

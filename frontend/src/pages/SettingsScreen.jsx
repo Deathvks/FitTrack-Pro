@@ -10,6 +10,13 @@ const ACCENT_OPTIONS = [
   { id: 'amber',  label: 'Ámbar',    hex: '#f59e0b' },
   { id: 'rose',   label: 'Rosa',     hex: '#f43f5e' },
   { id: 'teal',   label: 'Turquesa', hex: '#14b8a6' },
+  { id: 'cyan',   label: 'Cian',     hex: '#06b6d4' },
+  { id: 'orange', label: 'Naranja',  hex: '#f97316' },
+  // --- INICIO DE LA MODIFICACIÓN ---
+  { id: 'lime',   label: 'Lima',     hex: '#84cc16' },
+  { id: 'fuchsia',label: 'Fucsia',   hex: '#d946ef' },
+  { id: 'emerald',label: 'Esmeralda',hex: '#10b981' },
+  // --- FIN DE LA MODIFICACIÓN ---
 ];
 
 export default function SettingsScreen({
@@ -106,7 +113,7 @@ export default function SettingsScreen({
             <p className="text-xs text-text-muted mb-4">
               Cambia solo los elementos que usan el color de acento.
             </p>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
               {ACCENT_OPTIONS.map(opt => (
                 <AccentSwatch key={opt.id} option={opt} />
               ))}
