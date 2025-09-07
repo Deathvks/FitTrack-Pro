@@ -1,27 +1,27 @@
 import React from 'react';
-import { X, Palette, Smartphone, Code, Wrench, Sparkles, CheckSquare, Scale, Shield, Users } from 'lucide-react';
+import { X, Palette, Smartphone, Zap, Sparkles, CheckSquare, Scale, Shield, Users } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Shield className="w-6 h-6 text-green-400" />,
-      title: "Sistema de Verificación por Email",
-      description: "Nueva funcionalidad de verificación de cuentas por correo electrónico para mayor seguridad"
+      icon: <Zap className="w-6 h-6 text-purple-400" />,
+      title: "Nuevo Seguimiento de Creatina",
+      description: "Ahora puedes registrar y seguir tu consumo diario de creatina desde la sección de Nutrición."
     },
     {
-      icon: <Users className="w-6 h-6 text-blue-400" />,
-      title: "Panel de Administración Mejorado",
-      description: "Vista responsive del panel admin con indicadores de verificación de usuarios y mejor UX móvil"
+      icon: <Shield className="w-6 h-6 text-green-400" />,
+      title: "Verificación de Email Mejorada",
+      description: "Se ha corregido el flujo de verificación para que sea más intuitivo y funcione a la primera."
     },
     {
       icon: <Smartphone className="w-6 h-6 text-accent" />,
-      title: "Diseño Completamente Responsive",
-      description: "Interfaz optimizada para móviles con vistas de tarjetas adaptativas y mejor navegación"
+      title: "Interfaz Más Pulida y Responsive",
+      description: "Se han mejorado varios componentes visuales para que se adapten mejor a cualquier tamaño de pantalla."
     },
     {
-      icon: <Code className="w-6 h-6 text-purple-400" />,
-      title: "Optimizaciones de Backend",
-      description: "Migraciones automáticas de base de datos y mejoras en la gestión de usuarios verificados"
+      icon: <Users className="w-6 h-6 text-blue-400" />,
+      title: "Mejoras de Administración",
+      description: "La gestión de usuarios ahora es más robusta y segura para los administradores."
     }
   ];
 
@@ -41,8 +41,8 @@ const WelcomeModal = ({ onClose }) => {
               <Sparkles className="w-6 h-6 text-accent" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.7.0!</h2>
-              <p className="text-sm text-text-secondary">Verificación por email y mejoras de administración</p>
+              <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.8.0!</h2>
+              <p className="text-sm text-text-secondary">Seguimiento de creatina y más mejoras</p>
             </div>
           </div>
           <button 
@@ -75,7 +75,7 @@ const WelcomeModal = ({ onClose }) => {
           onClick={onClose}
           className="w-full px-6 py-3 rounded-xl font-semibold bg-accent text-white hover:bg-accent/90 transition-colors"
         >
-          ¡Empezar a Explorar!
+          ¡Entendido!
         </button>
       </div>
     </div>

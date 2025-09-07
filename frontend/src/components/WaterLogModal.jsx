@@ -31,8 +31,8 @@ const WaterLogModal = ({ initialQuantity = 0, onSave, onClose, isLoading }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-[fade-in_0.3s_ease-out]"
       onClick={onClose}
     >
-      <div
-        className="relative w-11/12 max-w-sm p-8 m-4 text-center mx-auto rounded-2xl border backdrop-blur-md bg-bg-secondary border-glass-border"
+      <GlassCard
+        className="relative w-11/12 max-w-sm p-8 m-4 text-center"
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={onClose} className="absolute top-4 right-4 text-text-secondary hover:text-text-primary transition">
@@ -52,12 +52,10 @@ const WaterLogModal = ({ initialQuantity = 0, onSave, onClose, isLoading }) => {
 
         {mode === 'ml' ? (
           <>
-            {/* --- INICIO DE LA CORRECCIÓN DEFINITIVA --- */}
             <div className="flex items-center justify-center gap-2">
                 <button onClick={() => handleAdjustMl(-250)} className="p-4 rounded-full bg-bg-secondary border border-glass-border hover:border-accent transition flex-shrink-0">
                     <Minus size={24} />
                 </button>
-                {/* Se elimina 'truncate' y se ajustan los tamaños de fuente para que el contenido quepa sin problemas */}
                 <div className="flex items-baseline justify-center flex-grow text-center min-w-0">
                     <p className="text-4xl sm:text-5xl font-extrabold">{quantity}</p>
                     <span className="text-xl sm:text-2xl font-bold text-text-muted ml-1.5 flex-shrink-0">ml</span>
@@ -66,7 +64,6 @@ const WaterLogModal = ({ initialQuantity = 0, onSave, onClose, isLoading }) => {
                     <Plus size={24} />
                 </button>
             </div>
-            {/* --- FIN DE LA CORRECCIÓN DEFINITIVA --- */}
             <div className="grid grid-cols-3 gap-2 mt-6">
                 {[250, 500, 750].map(amount => (
                     <button 
@@ -115,7 +112,7 @@ const WaterLogModal = ({ initialQuantity = 0, onSave, onClose, isLoading }) => {
             {isLoading ? <Spinner /> : 'Guardar'}
         </button>
 
-      </div>
+      </GlassCard>
     </div>
   );
 };
