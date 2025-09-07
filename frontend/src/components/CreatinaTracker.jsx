@@ -81,22 +81,17 @@ const CreatinaTracker = ({ onClose, selectedDate }) => {
         return 'text-gray-400';
     };
 
+    // --- INICIO DE LA MODIFICACIÓN ---
     useEffect(() => {
-        const scrollY = window.scrollY;
-        const body = document.body;
-        const originalStyle = body.style.cssText;
+        // Bloquea el scroll del body cuando el modal está abierto
+        document.body.style.overflow = 'hidden';
         
-        body.style.cssText = `position: fixed; top: -${scrollY}px; left: 0; right: 0; width: 100%; height: 100%; overflow: hidden;`;
-        
-        const preventTouchMove = (e) => e.preventDefault();
-        document.addEventListener('touchmove', preventTouchMove, { passive: false });
-        
+        // Función de limpieza para restaurar el scroll cuando el modal se cierra
         return () => {
-            body.style.cssText = originalStyle;
-            window.scrollTo(0, scrollY);
-            document.removeEventListener('touchmove', preventTouchMove);
+            document.body.style.overflow = 'auto';
         };
     }, []);
+    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleEditLog = (log) => {
         setEditingLog(log);
