@@ -15,6 +15,9 @@ const favoriteMealValidationRules = [
   body('protein_g').optional().isFloat({ min: 0 }).withMessage('Las proteínas deben ser un número positivo.'),
   body('carbs_g').optional().isFloat({ min: 0 }).withMessage('Los carbohidratos deben ser un número positivo.'),
   body('fats_g').optional().isFloat({ min: 0 }).withMessage('Las grasas deben ser un número positivo.'),
+  // --- INICIO DE LA MODIFICACIÓN ---
+  body('weight_g').optional().isFloat({ min: 0 }).withMessage('Los gramos deben ser un número positivo.'),
+  // --- FIN DE LA MODIFICACIÓN ---
 ];
 
 // --- Definición de Rutas ---

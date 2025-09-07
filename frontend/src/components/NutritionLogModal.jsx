@@ -89,7 +89,9 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
       protein_g: meal.protein_g,
       carbs_g: meal.carbs_g,
       fats_g: meal.fats_g,
+      // --- INICIO DE LA MODIFICACIÓN ---
       weight_g: meal.weight_g || '',
+      // --- FIN DE LA MODIFICACIÓN ---
     });
     setView('manual');
   };
@@ -182,7 +184,6 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
     onSave(dataToSave);
   };
   
-  // --- INICIO DE LA MODIFICACIÓN ---
   const [isDarkTheme, setIsDarkTheme] = useState(() =>
     typeof document !== 'undefined' && !document.body.classList.contains('light-theme')
   );
@@ -204,7 +205,6 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
   const inactiveModeClasses = isDarkTheme ? "bg-bg-secondary hover:bg-white/10 text-text-secondary" : "bg-gray-200 hover:bg-gray-300";
   const toggleContainerBg = isDarkTheme ? 'bg-bg-primary' : 'bg-gray-100';
   const favoriteItemBg = isDarkTheme ? 'bg-bg-secondary hover:bg-white/5' : 'bg-white hover:bg-gray-50';
-  // --- FIN DE LA MODIFICACIÓN ---
 
   return (
     <div
@@ -295,7 +295,13 @@ const NutritionLogModal = ({ logToEdit, mealType, onSave, onClose, isLoading }) 
               <div key={meal.id} onClick={() => handleSelectFavorite(meal)} className={`flex items-center justify-between p-3 border rounded-md cursor-pointer ${favoriteItemBg} ${isDarkTheme ? 'border-glass-border' : 'border-gray-200'}`}>
                 <div>
                   <p className="font-semibold text-text-primary">{meal.name}</p>
-                  <p className="text-xs text-text-secondary">{meal.calories} kcal · P {meal.protein_g}g · C {meal.carbs_g}g · G {meal.fats_g}g</p>
+                  {/* --- INICIO DE LA MODIFICACIÓN --- */}
+                  <p className="text-xs text-text-secondary">
+                    {meal.calories} kcal
+                    {meal.weight_g && ` (${meal.weight_g}g)`}
+                    {' · '}P {meal.protein_g}g · C {meal.carbs_g}g · G {meal.fats_g}g
+                  </p>
+                  {/* --- FIN DE LA MODIFICACIÓN --- */}
                 </div>
                 <button className="text-text-secondary hover:text-red-500 p-2" onClick={(e) => handleDeleteFavorite(meal.id, e)}><Trash2 size={18} /></button>
               </div>

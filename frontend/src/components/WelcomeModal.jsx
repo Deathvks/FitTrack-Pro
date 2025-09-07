@@ -1,22 +1,22 @@
 import React from 'react';
-import { X, Palette, Smartphone, Zap, Sparkles, CheckSquare, Scale, Shield, Users } from 'lucide-react';
+import { X, Compass, UserCog, Sparkles } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Palette className="w-6 h-6 text-rose-400" />,
-      title: "Interfaz de Tema Claro Mejorada",
-      description: "Se ha pulido el diseño de varios modales y componentes para que la experiencia en el tema claro sea perfecta."
+      icon: <Compass className="w-6 h-6 text-accent" />,
+      title: "Explora Rutinas Predefinidas",
+      description: "Descubre entrenamientos creados por expertos en la nueva pestaña 'Explorar' y añádelos a tu perfil con un solo clic."
     },
     {
-      icon: <Zap className="w-6 h-6 text-purple-400" />,
-      title: "Seguimiento de Creatina Optimizado",
-      description: "Ahora puedes añadir hasta dos tomas diarias de forma más intuitiva y la interfaz se adapta mejor a todos los dispositivos."
+      icon: <UserCog className="w-6 h-6 text-purple-400" />,
+      title: "Gestión de Cuenta Mejorada",
+      description: "Ahora puedes actualizar tu email y cambiar tu contraseña de forma segura desde la nueva sección en 'Ajustes'."
     },
     {
-      icon: <Smartphone className="w-6 h-6 text-accent" />,
-      title: "Mejoras de Responsividad",
-      description: "Hemos continuado ajustando la aplicación para asegurar una experiencia fluida en cualquier tamaño de pantalla."
+      icon: <Sparkles className="w-6 h-6 text-amber-400" />,
+      title: "Recálculo Inteligente de Récords",
+      description: "Al eliminar un entrenamiento, tus récords personales (PRs) se recalcularán para mantener tus datos siempre precisos."
     },
   ];
 
@@ -37,8 +37,8 @@ const WelcomeModal = ({ onClose }) => {
                 <Sparkles className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.9.2!</h2>
-                <p className="text-sm text-text-secondary">Mejoras de interfaz y usabilidad</p>
+                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.9.3!</h2>
+                <p className="text-sm text-text-secondary">Nuevas funciones y mejoras de calidad</p>
               </div>
             </div>
             <button 
@@ -73,7 +73,7 @@ const WelcomeModal = ({ onClose }) => {
             onClick={onClose}
             className="w-full px-6 py-3 rounded-xl font-semibold bg-accent text-white hover:bg-accent/90 transition-colors"
           >
-            ¡Perfecto!
+            Explorar Novedades
           </button>
         </div>
       </div>

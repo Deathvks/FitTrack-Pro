@@ -23,7 +23,9 @@ export const createFavoriteMeal = async (req, res, next) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { name, calories, protein_g, carbs_g, fats_g } = req.body;
+  // --- INICIO DE LA MODIFICACIÓN ---
+  const { name, calories, protein_g, carbs_g, fats_g, weight_g } = req.body;
+  // --- FIN DE LA MODIFICACIÓN ---
   const { userId } = req.user;
 
   try {
@@ -34,6 +36,9 @@ export const createFavoriteMeal = async (req, res, next) => {
       protein_g,
       carbs_g,
       fats_g,
+      // --- INICIO DE LA MODIFICACIÓN ---
+      weight_g,
+      // --- FIN DE LA MODIFICACIÓN ---
     });
     res.status(201).json(newMeal);
   } catch (error) {

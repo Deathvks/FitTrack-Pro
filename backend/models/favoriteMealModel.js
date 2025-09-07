@@ -38,6 +38,13 @@ const FavoriteMeal = sequelize.define(
       type: DataTypes.DECIMAL(6, 2),
       allowNull: true,
     },
+    // --- INICIO DE LA MODIFICACIÓN ---
+    weight_g: {
+      type: DataTypes.DECIMAL(8, 2),
+      allowNull: true,
+      comment: 'Peso de la comida en gramos'
+    },
+    // --- FIN DE LA MODIFICACIÓN ---
   },
   {
     tableName: 'favorite_meals',

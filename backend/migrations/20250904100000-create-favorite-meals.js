@@ -39,6 +39,13 @@ export default {
         type: Sequelize.DECIMAL(6, 2),
         allowNull: true,
       },
+      // --- INICIO DE LA MODIFICACIÓN ---
+      weight_g: {
+        type: Sequelize.DECIMAL(8, 2),
+        allowNull: true,
+        comment: 'Peso de la comida en gramos'
+      },
+      // --- FIN DE LA MODIFICACIÓN ---
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
