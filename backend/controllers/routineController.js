@@ -17,7 +17,7 @@ export const getAllRoutines = async (req, res, next) => {
         }
       ],
       order: [
-        ['id', 'DESC'],
+        ['id', 'ASC'],
         ['RoutineExercises', 'id', 'ASC'],
       ],
     });

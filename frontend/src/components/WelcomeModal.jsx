@@ -1,8 +1,18 @@
 import React from 'react';
-import { X, Sparkles, Utensils, Weight, CheckSquare } from 'lucide-react';
+import { X, Sparkles, Utensils, Weight, CheckSquare, Droplet, Copy } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
+    {
+      icon: <Copy className="w-6 h-6 text-green-400" />,
+      title: "Copia Rutinas Completas con un Clic",
+      description: "Añade rutinas de varios días a tu calendario con un solo botón, ahorrando tiempo y simplificando tu planificación."
+    },
+    {
+      icon: <Droplet className="w-6 h-6 text-blue-400" />,
+      title: "Corrección en el Contador de Creatina",
+      description: "Hemos solucionado un error que provocaba que el contador de días de creatina se reiniciara incorrectamente."
+    },
     {
       icon: <Utensils className="w-6 h-6 text-accent" />,
       title: "Precisión en Tus Comidas Favoritas",
@@ -37,8 +47,8 @@ const WelcomeModal = ({ onClose }) => {
                 <Sparkles className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.9.3!</h2>
-                <p className="text-sm text-text-secondary">Mejoras de nutrición y correcciones</p>
+                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.10.0!</h2>
+                <p className="text-sm text-text-secondary">Novedades y mejoras</p>
               </div>
             </div>
             <button

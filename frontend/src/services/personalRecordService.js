@@ -5,5 +5,5 @@ import apiClient from './apiClient';
  * @param {number} page - El número de página a solicitar.
  */
 export const getPersonalRecords = (page = 1) => {
-    return apiClient(`/records?page=${page}&limit=6`);
+    return apiClient(`/records?page=${page}&limit=5`);
 };

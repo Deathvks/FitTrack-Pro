@@ -5,6 +5,25 @@ import useAppStore from '../store/useAppStore';
 import { useToast } from '../hooks/useToast';
 import { saveRoutine } from '../services/routineService';
 
+// Helper to identify multi-day routines
+const isMultiDayRoutine = (routines) => {
+  if (!routines || routines.length < 2) return false;
+  const dayRoutines = routines.filter(r => /^Día \d+:/.test(r.name));
+  if (dayRoutines.length < 2) return false;
+
+  // Check for consecutive days starting from 1
+  const days = dayRoutines.map(r => parseInt(r.name.match(/^Día (\d+):/)[1], 10)).sort((a, b) => a - b);
+  
+  if (days[0] !== 1) return false; // Must start with Day 1
+
+  for (let i = 0; i < days.length - 1; i++) {
+    if (days[i+1] !== days[i] + 1) {
+      return false; // Not consecutive
+    }
+  }
+  return true;
+};
+
 // Componente de dropdown personalizado
 const CustomSelect = ({ value, onChange, options, placeholder, className = "" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -127,6 +146,44 @@ const TemplateRoutines = ({ setView }) => {
     }
   };
   
+  const handleCopyFullRoutine = async (category, routines) => {
+    const dayRoutines = routines
+      .filter(r => /^Día \d+:/.test(r.name))
+      .sort((a, b) => {
+        const dayA = parseInt(a.name.match(/^Día (\d+):/)[1], 10);
+        const dayB = parseInt(b.name.match(/^Día (\d+):/)[1], 10);
+        return dayA - dayB;
+      });
+
+    if (dayRoutines.length === 0) {
+      addToast('No se encontraron días de rutina para copiar.', 'warning');
+      return;
+    }
+
+    try {
+      for (const template of dayRoutines) {
+        const exercises = template.TemplateRoutineExercises.map((ex) => {
+          const newEx = { ...ex };
+          delete newEx.id;
+          delete newEx.template_routine_id;
+          return newEx;
+        });
+
+        const newRoutine = {
+          name: `${template.name} (Copia)`,
+          description: template.description,
+          exercises: exercises,
+        };
+        await saveRoutine(newRoutine);
+      }
+
+      addToast(`Rutina completa '${category}' copiada a "Mis Rutinas".`, 'success');
+      await fetchInitialData();
+    } catch (error) {
+      addToast(error.message || 'No se pudo copiar la rutina completa.', 'error');
+    }
+  };
+
   const handleStartWorkout = (template) => {
     startWorkout(template);
     setView('workout');
@@ -334,85 +391,99 @@ const TemplateRoutines = ({ setView }) => {
       {/* Rutinas filtradas */}
       {Object.keys(filteredRoutines).length > 0 ? (
         <div className="space-y-12">
-          {Object.keys(filteredRoutines).map(category => (
-            <div key={category}>
-              <div className="flex items-center gap-4 mb-6">
-                <h2 className="text-xl md:text-2xl font-bold text-text-primary">{category}</h2>
-                <span className="text-sm text-text-secondary bg-bg-secondary/50 px-3 py-1.5 rounded-lg border border-glass-border font-medium">
-                  {filteredRoutines[category].length} rutina{filteredRoutines[category].length !== 1 ? 's' : ''}
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 md:gap-8">
-              {filteredRoutines[category].map(routine => (
-                <GlassCard key={routine.id} className="p-6 md:p-7 flex flex-col min-h-[400px] hover:border-accent/30 transition-colors">
-                  <div className="flex-grow space-y-4">
-                    {/* Header con título y badges */}
-                    <div className="space-y-3">
-                      <h3 className="text-lg md:text-xl font-bold text-accent">{routine.name}</h3>
-                      
-                      {/* Badges informativos */}
-                      <div className="flex flex-wrap gap-2">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium border ${
-                          getDifficultyColor(routine.difficulty)
-                        }`}>
-                          <Target size={14} />
-                          {routine.difficulty}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary bg-bg-secondary/50 border border-glass-border">
-                          <Clock size={14} />
-                          ~{routine.duration} min
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary bg-bg-secondary/50 border border-glass-border">
-                          <Dumbbell size={14} />
-                          {routine.TemplateRoutineExercises.length} ejercicios
-                        </span>
-                      </div>
-                    </div>
+          {Object.keys(filteredRoutines).map(category => {
+            const routinesForCategory = filteredRoutines[category];
+            const isMultiDay = isMultiDayRoutine(routinesForCategory);
 
-                    {/* Descripción */}
-                    <p className="text-sm md:text-base text-text-secondary leading-relaxed">{routine.description}</p>
-                    
-                    {/* Lista completa de ejercicios */}
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-semibold text-text-secondary">Ejercicios:</h4>
-                      <div className="overflow-x-auto md:overflow-x-visible">
-                        <ul className="space-y-2 min-w-full">
-                          {routine.TemplateRoutineExercises.map(ex => (
-                            <li key={ex.id} className="bg-bg-secondary/50 p-3 rounded-lg text-sm min-w-max md:min-w-0">
-                              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-3">
-                                <span className="font-medium whitespace-nowrap md:whitespace-normal">{ex.name}</span>
-                                <span className="font-bold text-accent flex-shrink-0 text-left">{ex.sets}×{ex.reps}</span>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
+            return (
+              <div key={category}>
+                <div className="flex flex-wrap items-center gap-4 mb-6">
+                  <h2 className="text-xl md:text-2xl font-bold text-text-primary">{category}</h2>
+                  <span className="text-sm text-text-secondary bg-bg-secondary/50 px-3 py-1.5 rounded-lg border border-glass-border font-medium">
+                    {routinesForCategory.length} rutina{routinesForCategory.length !== 1 ? 's' : ''}
+                  </span>
+                  {isMultiDay && (
+                    <button
+                      onClick={() => handleCopyFullRoutine(category, routinesForCategory)}
+                      className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition text-sm border border-glass-border"
+                    >
+                      <Copy size={14} />
+                      Copiar Rutina Completa
+                    </button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 md:gap-8">
+                  {routinesForCategory.map(routine => (
+                    <GlassCard key={routine.id} className="p-6 md:p-7 flex flex-col min-h-[400px] hover:border-accent/30 transition-colors">
+                      <div className="flex-grow space-y-4">
+                        {/* Header con título y badges */}
+                        <div className="space-y-3">
+                          <h3 className="text-lg md:text-xl font-bold text-accent">{routine.name}</h3>
+                          
+                          {/* Badges informativos */}
+                          <div className="flex flex-wrap gap-2">
+                            <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium border ${
+                              getDifficultyColor(routine.difficulty)
+                            }`}>
+                              <Target size={14} />
+                              {routine.difficulty}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary bg-bg-secondary/50 border border-glass-border">
+                              <Clock size={14} />
+                              ~{routine.duration} min
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary bg-bg-secondary/50 border border-glass-border">
+                              <Dumbbell size={14} />
+                              {routine.TemplateRoutineExercises.length} ejercicios
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Descripción */}
+                        <p className="text-sm md:text-base text-text-secondary leading-relaxed">{routine.description}</p>
+                        
+                        {/* Lista completa de ejercicios */}
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-text-secondary">Ejercicios:</h4>
+                          <div className="overflow-x-auto md:overflow-x-visible">
+                            <ul className="space-y-2 min-w-full">
+                              {routine.TemplateRoutineExercises.map(ex => (
+                                <li key={ex.id} className="bg-bg-secondary/50 p-3 rounded-lg text-sm min-w-max md:min-w-0">
+                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-3">
+                                    <span className="font-medium whitespace-nowrap md:whitespace-normal">{ex.name}</span>
+                                    <span className="font-bold text-accent flex-shrink-0 text-left">{ex.sets}×{ex.reps}</span>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  
-                  {/* Botones de acción centrados */}
-                  <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-glass-border">
-                    <button 
-                      onClick={() => handleCopyToMyRoutines(routine)} 
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition text-sm"
-                    >
-                      <Copy size={16} />
-                      Copiar
-                    </button>
-                    <button 
-                      onClick={() => handleStartWorkout(routine)} 
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-bg-secondary font-semibold hover:scale-105 transition text-sm"
-                    >
-                      <Play size={16} />
-                      Empezar
-                    </button>
-                  </div>
-                </GlassCard>
-              ))}
-            </div>
-          </div>
-        ))}
+                      
+                      {/* Botones de acción centrados */}
+                      <div className="flex items-center justify-center gap-3 mt-6 pt-4 border-t border-glass-border">
+                        <button 
+                          onClick={() => handleCopyToMyRoutines(routine)} 
+                          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent/10 text-accent font-semibold hover:bg-accent/20 transition text-sm"
+                        >
+                          <Copy size={16} />
+                          Copiar
+                        </button>
+                        <button 
+                          onClick={() => handleStartWorkout(routine)} 
+                          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-accent text-bg-secondary font-semibold hover:scale-105 transition text-sm"
+                        >
+                          <Play size={16} />
+                          Empezar
+                        </button>
+                      </div>
+                    </GlassCard>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <GlassCard className="text-center p-8 md:p-10">

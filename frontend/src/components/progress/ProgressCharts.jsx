@@ -6,10 +6,10 @@ import Spinner from '../Spinner';
 // Tooltip personalizado para todos los gráficos
 export const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-        const dayOfMonth = label;
+        const formattedDate = new Date(label).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
         return (
             <div className="p-3 bg-bg-secondary border border-glass-border rounded-md shadow-lg text-sm">
-                <p className="font-semibold text-text-secondary">Día {dayOfMonth}</p>
+                <p className="font-semibold text-text-secondary">Fecha: {formattedDate}</p>
                 {payload.map((p, i) => (
                     <p key={i} style={{ color: p.color }}>
                         {p.name}: <strong>{Number(p.value).toLocaleString('es-ES')} {p.unit || ''}</strong>
@@ -21,7 +21,7 @@ export const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
-
+// Gráfico de Calorías y Macronutrientes
 export const NutritionCharts = ({ chartData, axisColor, isLoading }) => (
     <>
         {/* --- INICIO DE LA REORDENACIÓN --- */}
