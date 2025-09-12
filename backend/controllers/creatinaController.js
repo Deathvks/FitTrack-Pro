@@ -159,28 +159,30 @@ export const getCreatinaStats = async (req, res, next) => {
             });
         }
         
-        const logMap = new Map();
+        // Usamos un Map para agrupar tomas por día y sumar gramos
+        const dailyTotals = new Map();
         allLogs.forEach(log => {
-            if (!logMap.has(log.log_date)) {
-                logMap.set(log.log_date, true);
+            const date = log.log_date;
+            if (!dailyTotals.has(date)) {
+                dailyTotals.set(date, 0);
             }
+            dailyTotals.set(date, dailyTotals.get(date) + parseFloat(log.grams));
         });
 
-        const uniqueDates = [...logMap.keys()].sort((a, b) => new Date(b) - new Date(a));
+        const uniqueDates = [...dailyTotals.keys()].sort((a, b) => new Date(b) - new Date(a));
         
         const totalDays = uniqueDates.length;
         const totalGrams = allLogs.reduce((sum, log) => sum + parseFloat(log.grams), 0);
-        const averageGrams = allLogs.length > 0 ? totalGrams / allLogs.length : 0;
+        // El promedio debe ser por DÍA, no por TOMA.
+        const averageGrams = totalDays > 0 ? totalGrams / totalDays : 0;
         
         let currentStreak = 0;
         if (uniqueDates.length > 0) {
-            let currentDate = new Date();
-            currentDate.setUTCHours(0, 0, 0, 0);
-
+            // Obtener la fecha de hoy en UTC para una comparación consistente
+            const todayUTC = new Date(new Date().toISOString().split('T')[0]);
             const lastLogDate = new Date(uniqueDates[0]);
-            lastLogDate.setUTCHours(0, 0, 0, 0);
-            
-            const timeDiff = currentDate.getTime() - lastLogDate.getTime();
+
+            const timeDiff = todayUTC.getTime() - lastLogDate.getTime();
             const dayDiff = Math.round(timeDiff / (1000 * 3600 * 24));
 
             if (dayDiff <= 1) {
@@ -189,6 +191,7 @@ export const getCreatinaStats = async (req, res, next) => {
                     const date1 = new Date(uniqueDates[i]);
                     const date2 = new Date(uniqueDates[i+1]);
                     const diffDays = (date1.getTime() - date2.getTime()) / (1000 * 3600 * 24);
+                    
                     if (diffDays === 1) {
                         currentStreak++;
                     } else {
@@ -198,9 +201,10 @@ export const getCreatinaStats = async (req, res, next) => {
             }
         }
         
+        // Cálculo de la semana actual (de Lunes a Domingo)
         const todayForWeek = new Date();
-        const dayOfWeek = todayForWeek.getUTCDay();
-        const offset = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+        const dayOfWeek = todayForWeek.getUTCDay(); // 0=Dom, 1=Lun, ...
+        const offset = (dayOfWeek === 0) ? 6 : dayOfWeek - 1; // Lunes es 0
         const startOfWeek = new Date(todayForWeek);
         startOfWeek.setUTCDate(todayForWeek.getUTCDate() - offset);
         startOfWeek.setUTCHours(0, 0, 0, 0);
@@ -211,7 +215,7 @@ export const getCreatinaStats = async (req, res, next) => {
             data: {
                 totalDays,
                 currentStreak,
-                averageGrams,
+                averageGrams, // Promedio por día, no por toma
                 thisWeekDays,
             }
         });

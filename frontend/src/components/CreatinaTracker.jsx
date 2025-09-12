@@ -26,6 +26,7 @@ const CreatinaTracker = ({ onClose, selectedDate }) => {
 
     useEffect(() => {
         fetchCreatinaData();
+        setGrams(''); // Limpiar el input al cambiar de día
     }, [selectedDate]);
 
     const fetchCreatinaData = async () => {
@@ -81,7 +82,6 @@ const CreatinaTracker = ({ onClose, selectedDate }) => {
         return 'text-gray-400';
     };
 
-    // --- INICIO DE LA MODIFICACIÓN ---
     useEffect(() => {
         // Bloquea el scroll del body cuando el modal está abierto
         document.body.style.overflow = 'hidden';
@@ -91,7 +91,6 @@ const CreatinaTracker = ({ onClose, selectedDate }) => {
             document.body.style.overflow = 'auto';
         };
     }, []);
-    // --- FIN DE LA MODIFICACIÓN ---
 
     const handleEditLog = (log) => {
         setEditingLog(log);
