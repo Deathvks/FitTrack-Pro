@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronLeft, Check, Palette, Sun, Moon, MonitorCog, User, UserCog, Shield, LogOut, Info } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, Check, Palette, Sun, Moon, MonitorCog, User, UserCog, Shield, LogOut, Info, ChevronRight } from 'lucide-react';
 import useAppStore from '../store/useAppStore';
 import { APP_VERSION } from '../config/version';
 
@@ -12,11 +12,19 @@ const ACCENT_OPTIONS = [
   { id: 'teal',   label: 'Turquesa', hex: '#14b8a6' },
   { id: 'cyan',   label: 'Cian',     hex: '#06b6d4' },
   { id: 'orange', label: 'Naranja',  hex: '#f97316' },
-  // --- INICIO DE LA MODIFICACIÓN ---
   { id: 'lime',   label: 'Lima',     hex: '#84cc16' },
   { id: 'fuchsia',label: 'Fucsia',   hex: '#d946ef' },
   { id: 'emerald',label: 'Esmeralda',hex: '#10b981' },
-  // --- FIN DE LA MODIFICACIÓN ---
+  { id: 'indigo', label: 'Índigo',   hex: '#6366f1' },
+  { id: 'purple', label: 'Púrpura',  hex: '#a855f7' },
+  { id: 'pink',   label: 'Rosa Claro', hex: '#ec4899' },
+  { id: 'red',    label: 'Rojo',     hex: '#ef4444' },
+  { id: 'yellow', label: 'Amarillo', hex: '#eab308' },
+  { id: 'sky',    label: 'Cielo',    hex: '#0ea5e9' },
+  { id: 'slate',  label: 'Pizarra',  hex: '#64748b' },
+  { id: 'zinc',   label: 'Zinc',     hex: '#71717a' },
+  { id: 'stone',  label: 'Piedra',   hex: '#78716c' },
+  { id: 'neutral', label: 'Neutral', hex: '#737373' }
 ];
 
 export default function SettingsScreen({
@@ -28,6 +36,13 @@ export default function SettingsScreen({
   onLogoutClick
 }) {
   const { userProfile } = useAppStore();
+  const [currentColorPage, setCurrentColorPage] = useState(0);
+  
+  const COLORS_PER_PAGE = 8;
+  const totalPages = Math.ceil(ACCENT_OPTIONS.length / COLORS_PER_PAGE);
+  const startIndex = currentColorPage * COLORS_PER_PAGE;
+  const endIndex = startIndex + COLORS_PER_PAGE;
+  const currentColors = ACCENT_OPTIONS.slice(startIndex, endIndex);
 
   const ThemeButton = ({ value, icon, label }) => {
     const Icon = icon;
@@ -113,11 +128,38 @@ export default function SettingsScreen({
             <p className="text-xs text-text-muted mb-4">
               Cambia solo los elementos que usan el color de acento.
             </p>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
-              {ACCENT_OPTIONS.map(opt => (
+            
+            {/* Grid de colores con paginación */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-4 mb-4">
+              {currentColors.map(opt => (
                 <AccentSwatch key={opt.id} option={opt} />
               ))}
             </div>
+            
+            {/* Controles de paginación */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setCurrentColorPage(prev => Math.max(0, prev - 1))}
+                  disabled={currentColorPage === 0}
+                  className="p-2 rounded-lg border border-[--glass-border] text-text-secondary hover:text-text-primary hover:bg-accent-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                <span className="text-sm text-text-secondary px-3">
+                  {currentColorPage + 1} de {totalPages}
+                </span>
+                
+                <button
+                  onClick={() => setCurrentColorPage(prev => Math.min(totalPages - 1, prev + 1))}
+                  disabled={currentColorPage === totalPages - 1}
+                  className="p-2 rounded-lg border border-[--glass-border] text-text-secondary hover:text-text-primary hover:bg-accent-transparent transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
           </div>
         </section>
 

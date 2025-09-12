@@ -130,6 +130,76 @@ body.accent-emerald {
   --color-accent-transparent: rgba(16, 185, 129, 0.12);
   --color-accent-border: rgba(16, 185, 129, 0.28);
 }
+
+/* INDIGO */
+body.accent-indigo {
+  --color-accent: #6366f1;
+  --color-accent-transparent: rgba(99, 102, 241, 0.12);
+  --color-accent-border: rgba(99, 102, 241, 0.28);
+}
+
+/* PURPLE */
+body.accent-purple {
+  --color-accent: #a855f7;
+  --color-accent-transparent: rgba(168, 85, 247, 0.12);
+  --color-accent-border: rgba(168, 85, 247, 0.28);
+}
+
+/* PINK */
+body.accent-pink {
+  --color-accent: #ec4899;
+  --color-accent-transparent: rgba(236, 72, 153, 0.12);
+  --color-accent-border: rgba(236, 72, 153, 0.28);
+}
+
+/* RED */
+body.accent-red {
+  --color-accent: #ef4444;
+  --color-accent-transparent: rgba(239, 68, 68, 0.12);
+  --color-accent-border: rgba(239, 68, 68, 0.28);
+}
+
+/* YELLOW */
+body.accent-yellow {
+  --color-accent: #eab308;
+  --color-accent-transparent: rgba(234, 179, 8, 0.12);
+  --color-accent-border: rgba(234, 179, 8, 0.28);
+}
+
+/* SKY */
+body.accent-sky {
+  --color-accent: #0ea5e9;
+  --color-accent-transparent: rgba(14, 165, 233, 0.12);
+  --color-accent-border: rgba(14, 165, 233, 0.28);
+}
+
+/* SLATE */
+body.accent-slate {
+  --color-accent: #64748b;
+  --color-accent-transparent: rgba(100, 116, 139, 0.12);
+  --color-accent-border: rgba(100, 116, 139, 0.28);
+}
+
+/* ZINC */
+body.accent-zinc {
+  --color-accent: #71717a;
+  --color-accent-transparent: rgba(113, 113, 122, 0.12);
+  --color-accent-border: rgba(113, 113, 122, 0.28);
+}
+
+/* STONE */
+body.accent-stone {
+  --color-accent: #78716c;
+  --color-accent-transparent: rgba(120, 113, 108, 0.12);
+  --color-accent-border: rgba(120, 113, 108, 0.28);
+}
+
+/* NEUTRAL */
+body.accent-neutral {
+  --color-accent: #737373;
+  --color-accent-transparent: rgba(115, 115, 115, 0.12);
+  --color-accent-border: rgba(115, 115, 115, 0.28);
+}
 /* --- FIN DE LA MODIFICACIÓN --- */
 
 /* 5) COMPONENTES BASE */
