@@ -323,8 +323,6 @@ const CreatinaTracker = () => {
         <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
           Registros Recientes
         </h2>
-        </div>
-        </div>
         
         {logs.length === 0 ? (
           <div className="p-8 text-center">
