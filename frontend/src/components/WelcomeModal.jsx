@@ -1,33 +1,13 @@
 import React from 'react';
-import { X, Sparkles, Utensils, Weight, CheckSquare, Droplet, Copy } from 'lucide-react';
+import { X, Sparkles, Droplet } from 'lucide-react';
 
 const WelcomeModal = ({ onClose }) => {
   const features = [
     {
-      icon: <Copy className="w-6 h-6 text-green-400" />,
-      title: "Copia Rutinas Completas con un Clic",
-      description: "Añade rutinas de varios días a tu calendario con un solo botón, ahorrando tiempo y simplificando tu planificación."
-    },
-    {
       icon: <Droplet className="w-6 h-6 text-blue-400" />,
-      title: "Corrección en el Contador de Creatina",
-      description: "Hemos solucionado un error que provocaba que el contador de días de creatina se reiniciara incorrectamente."
-    },
-    {
-      icon: <Utensils className="w-6 h-6 text-accent" />,
-      title: "Precisión en Tus Comidas Favoritas",
-      description: "Ahora puedes guardar los gramos exactos de tus comidas favoritas para un registro nutricional más rápido y preciso."
-    },
-    {
-      icon: <CheckSquare className="w-6 h-6 text-purple-400" />,
-      title: "Correcciones en Formularios",
-      description: "Hemos mejorado la validación y el comportamiento en los modales de calorías y login para una experiencia más fluida."
-    },
-    {
-      icon: <Weight className="w-6 h-6 text-amber-400" />,
-      title: "Mejoras de Calidad de Vida",
-      description: "Se han pulido varios aspectos de la interfaz, como la alineación de notificaciones y la responsividad de los componentes."
-    },
+      title: "Arreglo conteo de creatina",
+      description: "Ahora la creatina cuenta bien las tomas y se reinician bien"
+    }
   ];
 
   return (
@@ -47,7 +27,7 @@ const WelcomeModal = ({ onClose }) => {
                 <Sparkles className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.10.0!</h2>
+                <h2 className="text-xl font-bold text-text-primary">¡Bienvenido a v2.10.1!</h2>
                 <p className="text-sm text-text-secondary">Novedades y mejoras</p>
               </div>
             </div>
